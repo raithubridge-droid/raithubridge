@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CalendarDays, MapPin, Phone } from "lucide-react"
+import { CalendarDays, ImageIcon, MapPin, Phone, Video } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,14 @@ import {
 import type { PendingSubmission } from "@/lib/marketplace-data"
 
 type ReviewState = "pending" | "approved" | "rejected"
+
+function formatFileSize(size: number) {
+  if (size < 1024 * 1024) {
+    return `${Math.max(1, Math.round(size / 1024))} KB`
+  }
+
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
 
 export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
   const [states, setStates] = React.useState<Record<string, ReviewState>>(() =>
@@ -88,6 +96,33 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
                     {row.description}
                   </li>
                 </ul>
+                {row.mediaAssets?.length ? (
+                  <div className="mt-5 rounded-xl border border-border/70 bg-background/70 p-4">
+                    <h4 className="text-sm font-semibold text-foreground">
+                      Uploaded media
+                    </h4>
+                    <ul className="mt-3 space-y-2">
+                      {row.mediaAssets.map((asset) => {
+                        const Icon = asset.type === "video" ? Video : ImageIcon
+
+                        return (
+                          <li key={asset.path}>
+                            <a
+                              href={asset.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              <Icon className="size-4 shrink-0 text-primary" aria-hidden />
+                              <span className="min-w-0 flex-1 truncate">{asset.name}</span>
+                              <span className="shrink-0">{formatFileSize(asset.size)}</span>
+                            </a>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             </CardContent>
             <CardFooter className="flex flex-wrap gap-3 border-t border-border/60 bg-muted/30 p-5">

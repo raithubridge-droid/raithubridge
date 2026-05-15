@@ -3,6 +3,7 @@ import Link from "next/link"
 
 import { FarmerProductForm } from "@/components/farmer-product-form"
 import { Button } from "@/components/ui/button"
+import { requireRole } from "@/lib/auth/roles"
 
 export const metadata: Metadata = {
   title: "Register Farmer",
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
     "List your farm product for bulk buyers. Submissions are reviewed before going live.",
 }
 
-export default function FarmerRegisterPage() {
+export default async function FarmerRegisterPage() {
+  await requireRole(["farmer", "admin"])
+
   return (
     <main className="px-4 py-14 sm:py-20">
       <div className="mx-auto w-full max-w-3xl">

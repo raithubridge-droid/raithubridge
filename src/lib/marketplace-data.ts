@@ -148,7 +148,17 @@ export type PendingSubmission = {
   unit: string
   price: string
   description: string
+  mediaAssets?: ProductMediaAsset[]
   submittedAt: string
+}
+
+export type ProductMediaAsset = {
+  url: string
+  path: string
+  type: "image" | "video"
+  mimeType: string
+  name: string
+  size: number
 }
 
 /** Admin review queue — static sample data */

@@ -17,7 +17,143 @@ export type Json =
 
 export type Database = {
   public: {
-    Tables: Record<string, never>
+    Tables: {
+      farmer_submissions: {
+        Row: {
+          id: string
+          user_id: string | null
+          farmer_name: string
+          phone: string
+          whatsapp: string
+          village: string
+          district: string
+          state: string
+          product_name: string
+          category: string
+          quantity_available: string
+          unit: string
+          price: string
+          description: string
+          media_assets: Json
+          status: "pending" | "approved" | "rejected"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          farmer_name: string
+          phone: string
+          whatsapp: string
+          village: string
+          district: string
+          state: string
+          product_name: string
+          category: string
+          quantity_available: string
+          unit: string
+          price: string
+          description: string
+          media_assets?: Json
+          status?: "pending" | "approved" | "rejected"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          farmer_name?: string
+          phone?: string
+          whatsapp?: string
+          village?: string
+          district?: string
+          state?: string
+          product_name?: string
+          category?: string
+          quantity_available?: string
+          unit?: string
+          price?: string
+          description?: string
+          media_assets?: Json
+          status?: "pending" | "approved" | "rejected"
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          email: string | null
+          full_name: string | null
+          role: "farmer" | "buyer" | "admin"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email?: string | null
+          full_name?: string | null
+          role?: "farmer" | "buyer" | "admin"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string | null
+          full_name?: string | null
+          role?: "farmer" | "buyer" | "admin"
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          id: string
+          submission_id: string | null
+          farmer_user_id: string | null
+          name: string
+          category: string
+          farmer_location: string
+          price_display: string
+          quantity_display: string
+          media_assets: Json
+          is_approved: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          submission_id?: string | null
+          farmer_user_id?: string | null
+          name: string
+          category: string
+          farmer_location: string
+          price_display: string
+          quantity_display: string
+          media_assets?: Json
+          is_approved?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          submission_id?: string | null
+          farmer_user_id?: string | null
+          name?: string
+          category?: string
+          farmer_location?: string
+          price_display?: string
+          quantity_display?: string
+          media_assets?: Json
+          is_approved?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
