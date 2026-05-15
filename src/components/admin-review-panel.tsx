@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CalendarDays, ImageIcon, MapPin, Phone, Video } from "lucide-react"
+import { CalendarDays, MapPin, Phone } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,56 +12,84 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import type { PendingSubmission } from "@/lib/marketplace-data"
+import { Textarea } from "@/components/ui/textarea"
+import type { PendingSubmission, SubmissionStatus } from "@/lib/marketplace-data"
 
-type ReviewState = "pending" | "approved" | "rejected"
-
-function formatFileSize(size: number) {
-  if (size < 1024 * 1024) {
-    return `${Math.max(1, Math.round(size / 1024))} KB`
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} MB`
+const statusTone: Record<SubmissionStatus, string> = {
+  "Pending Review": "bg-amber-100 text-amber-900 border-amber-200",
+  "On Hold": "bg-blue-100 text-blue-900 border-blue-200",
+  Approved: "bg-emerald-100 text-emerald-900 border-emerald-200",
+  Rejected: "bg-red-100 text-red-900 border-red-200",
 }
 
 export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
-  const [states, setStates] = React.useState<Record<string, ReviewState>>(() =>
-    Object.fromEntries(items.map((i) => [i.id, "pending" as const]))
+  const [states, setStates] = React.useState<Record<string, SubmissionStatus>>(() =>
+    Object.fromEntries(items.map((i) => [i.id, i.status]))
   )
+  const [comments, setComments] = React.useState<Record<string, string>>(() =>
+    Object.fromEntries(items.map((i) => [i.id, i.adminComment]))
+  )
+
+  function updateStatus(id: string, status: SubmissionStatus) {
+    setStates((current) => ({
+      ...current,
+      [id]: status,
+    }))
+  }
 
   return (
     <div className="space-y-8">
       {items.map((row) => {
-        const status = states[row.id] ?? "pending"
+        const status = states[row.id] ?? row.status
+        const comment = comments[row.id] ?? ""
+
         return (
           <Card
             key={row.id}
-            className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 data-[status=approved]:border-primary/45 data-[status=rejected]:opacity-75"
-            data-status={status}
+            className="overflow-hidden border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5"
           >
-            <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-4">
+            <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-card to-muted/40 pb-5">
               <div>
-                <CardTitle className="text-xl sm:text-2xl">{row.productName}</CardTitle>
+                <CardTitle className="text-2xl">{row.productName}</CardTitle>
                 <p className="mt-2 text-base text-muted-foreground">
                   Submission <span className="font-mono text-sm">{row.id}</span>
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{row.category}</Badge>
-                {status !== "pending" ? (
-                  <Badge variant={status === "approved" ? "default" : "destructive"}>
-                    {status === "approved" ? "Approved" : "Rejected"}
-                  </Badge>
-                ) : null}
+                <Badge className={`border px-3 py-1 text-sm ${statusTone[status]}`}>
+                  {status}
+                </Badge>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-6 pt-4 lg:grid-cols-2">
+            <CardContent className="grid gap-7 pt-6 lg:grid-cols-2">
+              <div className="space-y-2 lg:col-span-2">
+                <label
+                  htmlFor={`status-${row.id}`}
+                  className="text-sm font-semibold text-foreground"
+                >
+                  Status
+                </label>
+                <select
+                  id={`status-${row.id}`}
+                  value={status}
+                  onChange={(event) =>
+                    updateStatus(row.id, event.target.value as SubmissionStatus)
+                  }
+                  className="h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:max-w-xs"
+                >
+                  <option value="Pending Review">Pending</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Farmer
+                  Seller / farmer
                 </h3>
                 <ul className="mt-3 space-y-2.5 text-base">
-                  <li className="text-lg font-semibold text-foreground">{row.farmerName}</li>
+                  <li className="text-lg font-semibold text-foreground">{row.sellerName}</li>
                   <li className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="size-4 shrink-0" aria-hidden />
                     {row.phone}
@@ -70,7 +98,7 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
                   <li className="flex items-start gap-2 text-muted-foreground">
                     <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
                     <span>
-                      {row.village}, {row.district}, {row.state}
+                      {row.villageCity}, {row.district}, {row.state}
                     </span>
                   </li>
                   <li className="flex items-center gap-2 text-muted-foreground">
@@ -96,68 +124,58 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
                     {row.description}
                   </li>
                 </ul>
-                {row.mediaAssets?.length ? (
-                  <div className="mt-5 rounded-xl border border-border/70 bg-background/70 p-4">
-                    <h4 className="text-sm font-semibold text-foreground">
-                      Uploaded media
-                    </h4>
-                    <ul className="mt-3 space-y-2">
-                      {row.mediaAssets.map((asset) => {
-                        const Icon = asset.type === "video" ? Video : ImageIcon
-
-                        return (
-                          <li key={asset.path}>
-                            <a
-                              href={asset.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                            >
-                              <Icon className="size-4 shrink-0 text-primary" aria-hidden />
-                              <span className="min-w-0 flex-1 truncate">{asset.name}</span>
-                              <span className="shrink-0">{formatFileSize(asset.size)}</span>
-                            </a>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                ) : null}
+              </div>
+              <div className="space-y-2 lg:col-span-2">
+                <label
+                  htmlFor={`comment-${row.id}`}
+                  className="text-sm font-semibold text-foreground"
+                >
+                  Admin comments
+                </label>
+                <Textarea
+                  id={`comment-${row.id}`}
+                  value={comment}
+                  rows={3}
+                  onChange={(event) =>
+                    setComments((current) => ({
+                      ...current,
+                      [row.id]: event.target.value,
+                    }))
+                  }
+                  placeholder="Add a clear comment for the user."
+                />
+                <p className="text-sm text-muted-foreground">
+                  Comments entered here are visible to the user on My Submissions.
+                </p>
               </div>
             </CardContent>
             <CardFooter className="flex flex-wrap gap-3 border-t border-border/60 bg-muted/30 p-5">
               <Button
                 type="button"
                 className="h-11 min-w-[7.5rem] rounded-xl text-base font-semibold"
-                disabled={status !== "pending"}
-                onClick={() =>
-                  setStates((s) => ({
-                    ...s,
-                    [row.id]: "approved",
-                  }))
-                }
+                onClick={() => updateStatus(row.id, "Approved")}
               >
                 Approve
               </Button>
               <Button
                 type="button"
                 variant="outline"
+                className="h-11 min-w-[8.5rem] rounded-xl border-2 border-blue-300 text-base font-semibold text-blue-800 hover:bg-blue-50"
+                onClick={() => updateStatus(row.id, "On Hold")}
+              >
+                Keep On Hold
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
                 className="h-11 min-w-[7.5rem] rounded-xl border-2 border-destructive/35 text-base font-semibold text-destructive hover:bg-destructive/10"
-                disabled={status !== "pending"}
-                onClick={() =>
-                  setStates((s) => ({
-                    ...s,
-                    [row.id]: "rejected",
-                  }))
-                }
+                onClick={() => updateStatus(row.id, "Rejected")}
               >
                 Reject
               </Button>
-              {status !== "pending" ? (
-                <p className="w-full text-sm text-muted-foreground sm:ml-auto sm:w-auto sm:text-right">
-                  Preview only — changes are not saved to a database yet.
-                </p>
-              ) : null}
+              <p className="w-full text-sm text-muted-foreground sm:ml-auto sm:w-auto sm:text-right">
+                Static preview only. Status and comments are not saved yet.
+              </p>
             </CardFooter>
           </Card>
         )

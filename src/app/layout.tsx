@@ -17,11 +17,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "RaithuBridge — Farm products for bulk buyers",
+    default: "RaithuBridge — Farm products from trusted farmers and sellers",
     template: "%s — RaithuBridge",
   },
   description:
-    "Discover farm products from Indian farmers. Browse categories, send bulk inquiries, and list your harvest for review.",
+    "Buy farm products directly from trusted farmers and sellers. Browse products, submit listings, and track review status.",
 };
 
 export default function RootLayout({

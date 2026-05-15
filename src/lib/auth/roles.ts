@@ -14,7 +14,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const ROLE_HOME: Record<UserRole, string> = {
   admin: "/admin",
   buyer: "/products",
-  farmer: "/farmer/register",
+  farmer: "/submit-product",
 }
 
 export type AuthProfile = {

@@ -12,7 +12,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Sign up",
-  description: "Create a RaithuBridge account as a farmer or buyer with Google.",
+  description: "Create a RaithuBridge account.",
 }
 
 export default function SignUpPage() {
@@ -23,7 +23,7 @@ export default function SignUpPage() {
           <CardHeader className="space-y-2 pb-2">
             <CardTitle className="text-2xl font-semibold tracking-tight">Create account</CardTitle>
             <CardDescription className="text-base leading-relaxed">
-              Join as a farmer listing produce or a buyer sourcing in bulk.
+              One account lets you buy products and submit your own products for review.
             </CardDescription>
           </CardHeader>
           <CardContent>

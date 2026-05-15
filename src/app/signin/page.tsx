@@ -12,7 +12,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to RaithuBridge with Google.",
+  description: "Sign in to RaithuBridge.",
 }
 
 export default function SignInPage() {
@@ -23,7 +23,7 @@ export default function SignInPage() {
           <CardHeader className="space-y-2 pb-2">
             <CardTitle className="text-2xl font-semibold tracking-tight">Sign in</CardTitle>
             <CardDescription className="text-base leading-relaxed">
-              Access your farmer or buyer workspace with your Google account.
+              Access buying, selling, submissions, and review tools from one account.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -14,8 +14,7 @@ export function SiteFooter() {
             <span className="font-heading text-xl font-semibold">RaithuBridge</span>
           </Link>
           <p className="mt-4 max-w-sm text-base leading-relaxed text-muted-foreground">
-            Discover farm products, send inquiries in bulk, and buy closer to the harvest
-            across India.
+            Buy farm products directly from trusted farmers and sellers across India.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-12 text-base sm:gap-20">
@@ -28,8 +27,18 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/farmer/register" className="hover:text-foreground">
-                  Register Farmer
+                <Link href="/submit-product" className="hover:text-foreground">
+                  Submit Product
+                </Link>
+              </li>
+              <li>
+                <Link href="/my-submissions" className="hover:text-foreground">
+                  My Submissions
+                </Link>
+              </li>
+              <li>
+                <Link href="/cart" className="hover:text-foreground">
+                  Cart
                 </Link>
               </li>
               <li>

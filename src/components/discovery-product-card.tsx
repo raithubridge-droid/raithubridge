@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { MapPin } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -17,17 +18,12 @@ type DiscoveryProductCardProps = {
   locationLine: string
 }
 
-function inquiryHref(subject: string) {
-  return `mailto:hello@raithubridge.com?subject=${encodeURIComponent(subject)}`
-}
-
 export function DiscoveryProductCard({
   name,
   category,
   priceNote,
   locationLine,
 }: DiscoveryProductCardProps) {
-  const subject = `Inquiry: ${name}`
   return (
     <Card className="flex h-full flex-col border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-lg">
       <CardHeader className="pb-1">
@@ -50,7 +46,7 @@ export function DiscoveryProductCard({
       </CardContent>
       <CardFooter className="border-t border-border/60 pt-5">
         <Button asChild size="lg" className="w-full rounded-xl font-semibold">
-          <a href={inquiryHref(subject)}>Send Inquiry</a>
+          <Link href="/products">View Products</Link>
         </Button>
       </CardFooter>
     </Card>

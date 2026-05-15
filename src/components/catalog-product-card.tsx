@@ -1,7 +1,9 @@
-import { MapPin } from "lucide-react"
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link"
+import { MapPin, PackageCheck, UserRound } from "lucide-react"
 
+import { AddToCartButton } from "@/components/cart/add-to-cart-button"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -11,52 +13,85 @@ import {
 } from "@/components/ui/card"
 
 type CatalogProductCardProps = {
+  id: string
   name: string
   category: string
-  farmerLocation: string
+  sellerName: string
+  sellerLocation: string
   price: string
   quantity: string
-}
-
-function inquiryHref(subject: string) {
-  return `mailto:hello@raithubridge.com?subject=${encodeURIComponent(subject)}`
+  unit: string
+  status: string
+  mediaUrl?: string
 }
 
 export function CatalogProductCard({
+  id,
   name,
   category,
-  farmerLocation,
+  sellerName,
+  sellerLocation,
   price,
   quantity,
+  unit,
+  status,
+  mediaUrl,
 }: CatalogProductCardProps) {
   return (
-    <Card className="flex h-full flex-col border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-lg">
-      <CardHeader className="pb-1">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <CardTitle className="text-xl leading-snug sm:text-[1.35rem]">{name}</CardTitle>
-          <Badge
-            variant="secondary"
-            className="h-auto min-h-8 shrink-0 border border-primary/10 bg-amber-50/80 px-3 py-1 text-sm font-medium text-foreground dark:bg-amber-950/40 dark:text-amber-50"
-          >
-            {category}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-4 pt-0">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-base">
-          <span className="text-lg font-bold tracking-tight text-foreground">{price}</span>
-          <span className="text-muted-foreground">{quantity}</span>
-        </div>
-        <p className="flex items-start gap-2.5 text-base leading-relaxed text-muted-foreground">
-          <MapPin className="mt-0.5 size-5 shrink-0 text-primary/75" aria-hidden />
-          <span>{farmerLocation}</span>
-        </p>
-      </CardContent>
-      <CardFooter className="border-t border-border/60 pt-5">
-        <Button asChild size="lg" className="w-full rounded-xl font-semibold">
-          <a href={inquiryHref(`Inquiry: ${name}`)}>Send Inquiry</a>
-        </Button>
-      </CardFooter>
+    <Card className="flex h-full overflow-hidden border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-1 hover:shadow-xl">
+      <div className="flex h-full w-full flex-col">
+        <div className="h-2 bg-gradient-to-r from-primary via-lime-500 to-amber-400" />
+        <Link
+          href={`/products/${id}`}
+          className="mx-4 mt-4 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-muted"
+        >
+          {mediaUrl ? (
+            <img src={mediaUrl} alt={name} className="h-full w-full object-cover transition-transform hover:scale-105" />
+          ) : (
+            <span className="px-4 text-center text-sm font-semibold text-muted-foreground">
+              Product media
+            </span>
+          )}
+        </Link>
+        <CardHeader className="pb-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <CardTitle className="text-2xl leading-snug">
+              <Link href={`/products/${id}`} className="hover:text-primary">
+                {name}
+              </Link>
+            </CardTitle>
+            <Badge
+              variant="secondary"
+              className="h-auto min-h-8 shrink-0 border border-primary/10 bg-amber-50/90 px-3 py-1 text-sm font-semibold text-foreground"
+            >
+              {category}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-1 flex-col gap-5 pt-0">
+          <div className="rounded-xl bg-muted/55 p-4">
+            <p className="text-2xl font-bold tracking-tight text-foreground">{price}</p>
+            <p className="mt-1 flex items-center gap-2 text-base text-muted-foreground">
+              <PackageCheck className="size-5 text-primary" aria-hidden />
+              {quantity} {unit} available
+            </p>
+          </div>
+          <div className="space-y-3 text-base text-muted-foreground">
+            <p className="flex items-center gap-2.5">
+              <UserRound className="size-5 shrink-0 text-primary/80" aria-hidden />
+              <span>{sellerName}</span>
+            </p>
+            <p className="flex items-start gap-2.5 leading-relaxed">
+              <MapPin className="mt-0.5 size-5 shrink-0 text-primary/80" aria-hidden />
+              <span>{sellerLocation}</span>
+            </p>
+          </div>
+          <Badge className="w-fit rounded-full px-3 py-1 text-sm">{status}</Badge>
+        </CardContent>
+        <CardFooter className="border-t border-border/60 pt-5">
+          <AddToCartButton productId={id} className="w-full rounded-xl font-semibold" />
+        </CardFooter>
+      </div>
     </Card>
   )
 }

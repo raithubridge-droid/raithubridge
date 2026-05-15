@@ -1,83 +1,35 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import { AdminReviewPanel } from "@/components/admin-review-panel"
-import { requireRole } from "@/lib/auth/roles"
-import { PENDING_SUBMISSIONS, type PendingSubmission, type ProductMediaAsset } from "@/lib/marketplace-data"
-import { createClient } from "@/lib/supabase/server"
-import type { Json } from "@/types/database"
+import { Button } from "@/components/ui/button"
+import { SAMPLE_SUBMISSIONS } from "@/lib/marketplace-data"
 
 export const metadata: Metadata = {
   title: "Admin",
-  description: "Review pending farmer product submissions (sample data).",
+  description: "Review submitted products and manage visible user comments.",
 }
 
-function isMediaAsset(value: unknown): value is ProductMediaAsset {
-  if (!value || typeof value !== "object") {
-    return false
-  }
-
-  const asset = value as Record<string, unknown>
-  return (
-    typeof asset.url === "string" &&
-    typeof asset.path === "string" &&
-    (asset.type === "image" || asset.type === "video") &&
-    typeof asset.mimeType === "string" &&
-    typeof asset.name === "string" &&
-    typeof asset.size === "number"
-  )
-}
-
-function toMediaAssets(value: Json): ProductMediaAsset[] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value.filter(isMediaAsset)
-}
-
-export default async function AdminPage() {
-  await requireRole(["admin"])
-  const supabase = await createClient()
-  const { data: submissions } = await supabase
-    .from("farmer_submissions")
-    .select("*")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false })
-
-  const items: PendingSubmission[] = submissions?.length
-    ? submissions.map((row) => ({
-        id: row.id,
-        farmerName: row.farmer_name,
-        phone: row.phone,
-        whatsapp: row.whatsapp,
-        village: row.village,
-        district: row.district,
-        state: row.state,
-        productName: row.product_name,
-        category: row.category,
-        quantityAvailable: row.quantity_available,
-        unit: row.unit,
-        price: row.price,
-        description: row.description,
-        mediaAssets: toMediaAssets(row.media_assets),
-        submittedAt: new Intl.DateTimeFormat("en-IN", {
-          dateStyle: "medium",
-        }).format(new Date(row.created_at)),
-      }))
-    : PENDING_SUBMISSIONS
-
+export default function AdminPage() {
   return (
     <main className="px-4 py-14 sm:py-20">
-      <div className="mx-auto w-full max-w-4xl">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-          Review dashboard
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Pending products (static sample data). Approve and Reject are visual previews
-          only—no database yet.
-        </p>
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
+              Admin Dashboard
+            </h1>
+            <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+              Review submitted products, update status, and leave comments that are visible
+              to the user. This dashboard uses sample data only for now.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="h-11 rounded-xl px-5 text-base font-semibold">
+            <Link href="/admin/inventory">View Inventory</Link>
+          </Button>
+        </div>
         <div className="mt-12">
-          <AdminReviewPanel items={items} />
+          <AdminReviewPanel items={SAMPLE_SUBMISSIONS} />
         </div>
       </div>
     </main>
