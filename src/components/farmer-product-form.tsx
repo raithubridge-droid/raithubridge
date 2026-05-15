@@ -25,13 +25,13 @@ export function FarmerProductForm() {
         <p className="text-lg font-medium text-foreground">
           Your product has been submitted for review.
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-3 text-base text-muted-foreground">
           Our team will reach out on WhatsApp or phone after verification.
         </p>
         <Button
           type="button"
           variant="outline"
-          className="mt-6"
+          className="mt-8 h-11 rounded-xl px-6 text-base"
           onClick={() => setSubmitted(false)}
         >
           Submit another product
@@ -43,10 +43,10 @@ export function FarmerProductForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto max-w-2xl space-y-6 rounded-xl border border-border/80 bg-card/80 p-6 shadow-sm sm:p-8"
+      className="mx-auto max-w-2xl space-y-8 rounded-2xl border border-border/80 bg-card/90 p-7 shadow-md ring-1 ring-primary/5 sm:p-10"
     >
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold text-foreground">Farmer details</legend>
+      <fieldset className="space-y-5">
+        <legend className="text-base font-semibold text-foreground">Farmer details</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="farmerName">Farmer name</Label>
@@ -89,8 +89,8 @@ export function FarmerProductForm() {
         </div>
       </fieldset>
 
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold text-foreground">Product details</legend>
+      <fieldset className="space-y-5">
+        <legend className="text-base font-semibold text-foreground">Product details</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="productName">Product name</Label>
@@ -111,8 +111,8 @@ export function FarmerProductForm() {
               name="unit"
               required
               className={cn(
-                "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none",
-                "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                "h-11 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base outline-none",
+                "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
                 "dark:bg-input/30"
               )}
             >
@@ -141,7 +141,7 @@ export function FarmerProductForm() {
         </div>
       </fieldset>
 
-      <Button type="submit" className="w-full rounded-lg sm:w-auto sm:min-w-48">
+      <Button type="submit" className="h-12 w-full rounded-xl text-base font-semibold sm:w-auto sm:min-w-56">
         Submit for review
       </Button>
     </form>

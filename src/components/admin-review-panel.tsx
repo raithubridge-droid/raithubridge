@@ -22,20 +22,20 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {items.map((row) => {
         const status = states[row.id] ?? "pending"
         return (
           <Card
             key={row.id}
-            className="border-border/80 bg-card/90 shadow-sm data-[status=approved]:border-primary/40 data-[status=rejected]:opacity-75"
+            className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 data-[status=approved]:border-primary/45 data-[status=rejected]:opacity-75"
             data-status={status}
           >
             <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-4">
               <div>
-                <CardTitle className="text-lg">{row.productName}</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Submission <span className="font-mono text-xs">{row.id}</span>
+                <CardTitle className="text-xl sm:text-2xl">{row.productName}</CardTitle>
+                <p className="mt-2 text-base text-muted-foreground">
+                  Submission <span className="font-mono text-sm">{row.id}</span>
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -49,33 +49,33 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
             </CardHeader>
             <CardContent className="grid gap-6 pt-4 lg:grid-cols-2">
               <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Farmer
                 </h3>
-                <ul className="mt-2 space-y-2 text-sm">
-                  <li className="font-medium text-foreground">{row.farmerName}</li>
+                <ul className="mt-3 space-y-2.5 text-base">
+                  <li className="text-lg font-semibold text-foreground">{row.farmerName}</li>
                   <li className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="size-3.5 shrink-0" aria-hidden />
+                    <Phone className="size-4 shrink-0" aria-hidden />
                     {row.phone}
                   </li>
                   <li className="text-muted-foreground">WhatsApp: {row.whatsapp}</li>
                   <li className="flex items-start gap-2 text-muted-foreground">
-                    <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                    <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
                     <span>
                       {row.village}, {row.district}, {row.state}
                     </span>
                   </li>
                   <li className="flex items-center gap-2 text-muted-foreground">
-                    <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+                    <CalendarDays className="size-4 shrink-0" aria-hidden />
                     Submitted {row.submittedAt}
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Product
                 </h3>
-                <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+                <ul className="mt-3 space-y-2.5 text-base text-muted-foreground">
                   <li>
                     <span className="text-foreground">Quantity:</span>{" "}
                     {row.quantityAvailable} {row.unit}
@@ -90,10 +90,10 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
                 </ul>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-wrap gap-3 border-t border-border/60 bg-muted/30">
+            <CardFooter className="flex flex-wrap gap-3 border-t border-border/60 bg-muted/30 p-5">
               <Button
                 type="button"
-                className="rounded-lg"
+                className="h-11 min-w-[7.5rem] rounded-xl text-base font-semibold"
                 disabled={status !== "pending"}
                 onClick={() =>
                   setStates((s) => ({
@@ -107,7 +107,7 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10"
+                className="h-11 min-w-[7.5rem] rounded-xl border-2 border-destructive/35 text-base font-semibold text-destructive hover:bg-destructive/10"
                 disabled={status !== "pending"}
                 onClick={() =>
                   setStates((s) => ({
@@ -119,7 +119,7 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
                 Reject
               </Button>
               {status !== "pending" ? (
-                <p className="w-full text-xs text-muted-foreground sm:w-auto sm:ml-auto">
+                <p className="w-full text-sm text-muted-foreground sm:ml-auto sm:w-auto sm:text-right">
                   Preview only — changes are not saved to a database yet.
                 </p>
               ) : null}
