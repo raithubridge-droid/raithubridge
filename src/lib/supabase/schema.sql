@@ -16,7 +16,7 @@ create table if not exists public.profiles (
 create index if not exists profiles_role_idx on public.profiles (role);
 
 -- ---------------------------------------------------------------------------
--- Farmer registration / product submissions — admin approves into `products`
+-- Product submissions — admin approves into `products`
 -- ---------------------------------------------------------------------------
 create table if not exists public.farmer_submissions (
   id uuid primary key default gen_random_uuid(),
@@ -34,7 +34,7 @@ create table if not exists public.farmer_submissions (
   price text not null,
   description text not null,
   media_assets jsonb not null default '[]'::jsonb,
-  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  status text not null default 'pending' check (status in ('pending', 'on_hold', 'approved', 'rejected')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -43,7 +43,7 @@ create index if not exists farmer_submissions_status_idx on public.farmer_submis
 create index if not exists farmer_submissions_user_idx on public.farmer_submissions (user_id);
 
 -- ---------------------------------------------------------------------------
--- Approved product catalog (buyer-facing)
+-- Approved product catalog
 -- ---------------------------------------------------------------------------
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
@@ -61,23 +61,6 @@ create table if not exists public.products (
 );
 
 create index if not exists products_approved_idx on public.products (is_approved);
-
--- ---------------------------------------------------------------------------
--- Product media bucket
--- ---------------------------------------------------------------------------
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
-  'product-media',
-  'product-media',
-  true,
-  52428800,
-  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime']
-)
-on conflict (id) do update
-set
-  public = excluded.public,
-  file_size_limit = excluded.file_size_limit,
-  allowed_mime_types = excluded.allowed_mime_types;
 
 -- ---------------------------------------------------------------------------
 -- Role helper
@@ -128,14 +111,15 @@ with check (
 );
 
 drop policy if exists "farmer_submissions_insert_farmer" on public.farmer_submissions;
+drop policy if exists "farmer_submissions_insert_user" on public.farmer_submissions;
 drop policy if exists "farmer_submissions_select_own_or_admin" on public.farmer_submissions;
 drop policy if exists "farmer_submissions_update_admin" on public.farmer_submissions;
 
-create policy "farmer_submissions_insert_farmer"
+create policy "farmer_submissions_insert_user"
 on public.farmer_submissions
 for insert
 to authenticated
-with check (user_id = auth.uid() and public.current_user_role() in ('farmer', 'admin'));
+with check (user_id = auth.uid());
 
 create policy "farmer_submissions_select_own_or_admin"
 on public.farmer_submissions
@@ -152,6 +136,7 @@ with check (public.current_user_role() = 'admin');
 
 drop policy if exists "products_select_approved_or_owner_or_admin" on public.products;
 drop policy if exists "products_insert_farmer_or_admin" on public.products;
+drop policy if exists "products_insert_user_or_admin" on public.products;
 drop policy if exists "products_update_owner_or_admin" on public.products;
 
 create policy "products_select_approved_or_owner_or_admin"
@@ -164,11 +149,11 @@ using (
   or public.current_user_role() = 'admin'
 );
 
-create policy "products_insert_farmer_or_admin"
+create policy "products_insert_user_or_admin"
 on public.products
 for insert
 to authenticated
-with check (farmer_user_id = auth.uid() and public.current_user_role() in ('farmer', 'admin'));
+with check (farmer_user_id = auth.uid() or public.current_user_role() = 'admin');
 
 create policy "products_update_owner_or_admin"
 on public.products
@@ -176,46 +161,3 @@ for update
 to authenticated
 using (farmer_user_id = auth.uid() or public.current_user_role() = 'admin')
 with check (farmer_user_id = auth.uid() or public.current_user_role() = 'admin');
-
-drop policy if exists "product_media_public_read" on storage.objects;
-drop policy if exists "product_media_insert_farmer" on storage.objects;
-drop policy if exists "product_media_update_owner_or_admin" on storage.objects;
-drop policy if exists "product_media_delete_owner_or_admin" on storage.objects;
-
-create policy "product_media_public_read"
-on storage.objects
-for select
-to anon, authenticated
-using (bucket_id = 'product-media');
-
-create policy "product_media_insert_farmer"
-on storage.objects
-for insert
-to authenticated
-with check (
-  bucket_id = 'product-media'
-  and (storage.foldername(name))[1] = auth.uid()::text
-  and public.current_user_role() in ('farmer', 'admin')
-);
-
-create policy "product_media_update_owner_or_admin"
-on storage.objects
-for update
-to authenticated
-using (
-  bucket_id = 'product-media'
-  and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_role() = 'admin')
-)
-with check (
-  bucket_id = 'product-media'
-  and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_role() = 'admin')
-);
-
-create policy "product_media_delete_owner_or_admin"
-on storage.objects
-for delete
-to authenticated
-using (
-  bucket_id = 'product-media'
-  and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_role() = 'admin')
-);

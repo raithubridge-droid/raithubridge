@@ -35,7 +35,7 @@ export type Database = {
           price: string
           description: string
           media_assets: Json
-          status: "pending" | "approved" | "rejected"
+          status: "pending" | "on_hold" | "approved" | "rejected"
           created_at: string
           updated_at: string
         }
@@ -55,7 +55,7 @@ export type Database = {
           price: string
           description: string
           media_assets?: Json
-          status?: "pending" | "approved" | "rejected"
+          status?: "pending" | "on_hold" | "approved" | "rejected"
           created_at?: string
           updated_at?: string
         }
@@ -75,7 +75,7 @@ export type Database = {
           price?: string
           description?: string
           media_assets?: Json
-          status?: "pending" | "approved" | "rejected"
+          status?: "pending" | "on_hold" | "approved" | "rejected"
           created_at?: string
           updated_at?: string
         }

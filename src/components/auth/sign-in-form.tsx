@@ -6,34 +6,17 @@ import { LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createClient } from "@/lib/supabase/client"
 
 export function SignInForm() {
   const [message, setMessage] = React.useState<string | null>(null)
-  const [isLoading, setIsLoading] = React.useState(false)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setMessage("Email sign-in is not enabled yet. Use Google to continue.")
+    setMessage("Static preview only. Authentication will be connected later.")
   }
 
-  async function handleGoogleSignIn() {
-    setIsLoading(true)
-    setMessage(null)
-
-    const supabase = createClient()
-    const origin = window.location.origin
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${origin}/auth/callback?next=/dashboard`,
-      },
-    })
-
-    if (error) {
-      setMessage(error.message)
-      setIsLoading(false)
-    }
+  function handleGoogleSignIn() {
+    setMessage("Google login UI is static for now and will be connected later.")
   }
 
   return (
@@ -42,11 +25,10 @@ export function SignInForm() {
         type="button"
         variant="outline"
         className="h-12 w-full rounded-xl text-base font-semibold"
-        disabled={isLoading}
         onClick={handleGoogleSignIn}
       >
         <LogIn className="size-5" aria-hidden />
-        {isLoading ? "Redirecting..." : "Continue with Google"}
+        Continue with Google
       </Button>
 
       <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -74,7 +56,7 @@ export function SignInForm() {
           type="password"
           autoComplete="current-password"
           required
-          placeholder="••••••••"
+          placeholder="Password"
         />
       </div>
       {message ? (

@@ -25,29 +25,25 @@ import {
   PRICE_VARIES_NOTE,
 } from "@/lib/marketplace-data"
 
-const bulkSteps = [
+const productSteps = [
   {
     title: "Discover listings",
-    description:
-      "Filter by category and region. Every card shows farmer location and indicative pricing.",
+    description: "Browse products by category, seller, location, price, and availability.",
     icon: PackageSearch,
   },
   {
-    title: "Send an inquiry",
-    description:
-      "Share quantity, delivery window, and specs. Farmers respond with availability and quotes.",
+    title: "Add products to cart",
+    description: "Save products to your cart, adjust quantities, and review purchase details.",
     icon: Wheat,
   },
   {
-    title: "Confirm bulk terms",
-    description:
-      "Align on grade, packing, and logistics. RaithuBridge keeps communication structured.",
+    title: "Submit products",
+    description: "Any signed-in user can submit farm products for review and listing.",
     icon: CheckCircle2,
   },
   {
-    title: "Schedule pickup or dispatch",
-    description:
-      "Coordinate directly with the farmer or nominated transport—built for repeat bulk orders.",
+    title: "Track review status",
+    description: "Follow Pending, On Hold, Approved, and Rejected statuses with admin comments.",
     icon: Truck,
   },
 ] as const
@@ -55,15 +51,15 @@ const bulkSteps = [
 const whyDirect = [
   {
     title: "Closer to the harvest",
-    body: "See what is in season and where it is grown—reducing surprises on quality and freshness.",
+    body: "See what is available, who is selling it, and where it is located before you contact the seller.",
   },
   {
     title: "Transparent pricing",
-    body: "Understand how quantity tiers affect rates before you commit to a full truckload.",
+    body: "Compare prices and quantities across listings before deciding what to buy.",
   },
   {
-    title: "Stronger farmer relationships",
-    body: "Ideal for caterers, hotels, and planners who want dependable supply with fewer middle layers.",
+    title: "Stronger seller relationships",
+    body: "Connect directly with farmers and sellers, whether you are buying or listing your own products.",
   },
 ] as const
 
@@ -90,14 +86,14 @@ export default function Home() {
             variant="secondary"
             className="mb-6 border border-primary/10 bg-card/90 px-4 py-1.5 text-sm font-medium shadow-sm"
           >
-            Farm-to-bulk marketplace · India
+            Trusted farm product listings · India
           </Badge>
           <h1 className="font-heading max-w-4xl text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl md:leading-[1.08] lg:text-[3.25rem]">
-            Buy Farm Products Directly From Farmers
+            Buy Farm Products Directly From Trusted Farmers And Sellers
           </h1>
           <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Browse chillies, pulses, nuts, grains, and more from listed origins. Compare
-            categories, then send an inquiry when you are ready to buy in bulk.
+            Browse chillies, pulses, nuts, grains, and more. Compare listings, contact
+            sellers, and submit your own products for review from one simple interface.
           </p>
           <div className="mt-10 flex w-full max-w-lg flex-col gap-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-5">
             <Button
@@ -105,7 +101,7 @@ export default function Home() {
               size="lg"
               className="h-12 min-h-12 rounded-xl px-10 text-base font-semibold shadow-lg shadow-primary/20 sm:h-14 sm:min-h-14 sm:px-12 sm:text-lg"
             >
-              <Link href="/farmer/register">I am a Farmer</Link>
+              <Link href="/submit-product">Submit Product</Link>
             </Button>
             <Button
               asChild
@@ -113,7 +109,7 @@ export default function Home() {
               size="lg"
               className="h-12 min-h-12 rounded-xl border-2 border-primary/30 bg-card/90 px-10 text-base font-semibold backdrop-blur-sm hover:bg-accent sm:h-14 sm:min-h-14 sm:px-12 sm:text-lg"
             >
-              <Link href="/products">I am a Buyer</Link>
+              <Link href="/products">Browse Products</Link>
             </Button>
           </div>
           <Button
@@ -122,7 +118,7 @@ export default function Home() {
             className="mt-8 text-base font-medium text-primary hover:bg-primary/5 hover:text-primary"
           >
             <Link href="/products" className="inline-flex items-center gap-2">
-              View full product catalog
+              View product catalog
               <ArrowRight className="size-5" aria-hidden />
             </Link>
           </Button>
@@ -140,12 +136,12 @@ export default function Home() {
                 Browse by category
               </h2>
               <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-                Start with staples buyers ask for most. Listings highlight origin so you
-                can plan procurement by region.
+                Start with trusted product categories. Listings highlight seller location
+                and indicative pricing.
               </p>
             </div>
             <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl px-5 text-base font-semibold">
-              <Link href="/products">All approved products</Link>
+              <Link href="/products">All products</Link>
             </Button>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
@@ -170,7 +166,7 @@ export default function Home() {
                 Popular products
               </h2>
               <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-                Verified sample listings with indicative farmer prices and available
+                Verified sample listings with indicative seller prices and available
                 quantities.
               </p>
             </div>
@@ -179,11 +175,16 @@ export default function Home() {
             {popular.map((p) => (
               <CatalogProductCard
                 key={p.id}
+                id={p.id}
                 name={p.name}
                 category={p.category}
-                farmerLocation={p.farmerLocation}
+                sellerName={p.sellerName}
+                sellerLocation={p.sellerLocation}
                 price={p.price}
                 quantity={p.quantity}
+                unit={p.unit}
+                status={p.status}
+                mediaUrl={p.mediaAssets.find((asset) => asset.type === "image")?.url}
               />
             ))}
           </div>
@@ -193,14 +194,14 @@ export default function Home() {
       <section className="border-b border-border/60 bg-gradient-to-br from-muted/50 via-background to-accent/25 px-4 py-16 sm:py-24">
         <div className="mx-auto w-full max-w-6xl">
           <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-            How bulk orders work
+            How RaithuBridge Works
           </h2>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-            RaithuBridge is built for discovery first—then structured follow-up when both
-            sides are ready to move volume.
+            RaithuBridge keeps buying, selling, review, and inventory workflows clear for
+            everyone using the platform.
           </p>
           <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">
-            {bulkSteps.map(({ title, description, icon: Icon }) => (
+            {productSteps.map(({ title, description, icon: Icon }) => (
               <Card
                 key={title}
                 className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5"
@@ -231,7 +232,7 @@ export default function Home() {
                 Why buy direct
               </div>
               <h2 className="font-heading mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                Why buy directly from farmers
+                Why buy directly from farmers and sellers
               </h2>
               <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
                 Middlemen are not always bad—but opaque chains make pricing and quality
