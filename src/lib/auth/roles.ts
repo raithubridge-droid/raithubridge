@@ -3,18 +3,18 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/types/database"
 
-export type UserRole = Database["public"]["Tables"]["profiles"]["Row"]["role"]
+export type UserRole = Database["public"]["Tables"]["users"]["Row"]["role"]
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Admin",
   buyer: "Buyer",
-  farmer: "Farmer",
+  seller: "Seller",
 }
 
 export const ROLE_HOME: Record<UserRole, string> = {
   admin: "/admin",
   buyer: "/products",
-  farmer: "/submit-product",
+  seller: "/submit-product",
 }
 
 export type AuthProfile = {
@@ -35,7 +35,7 @@ export async function getCurrentProfile() {
   }
 
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("users")
     .select("id, email, full_name, role")
     .eq("id", user.id)
     .maybeSingle()
@@ -53,7 +53,7 @@ export async function getCurrentProfile() {
   }
 
   const { data: createdProfile } = await supabase
-    .from("profiles")
+    .from("users")
     .upsert(fallbackProfile)
     .select("id, email, full_name, role")
     .single()
