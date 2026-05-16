@@ -1,10 +1,11 @@
-import type { PendingSubmission } from "@/lib/marketplace-data"
+import type { PendingSubmission, ProductMediaAsset } from "@/lib/marketplace-data"
 import { normalizeReviewStatus } from "@/lib/domain"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/types/database"
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"]
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"]
+type MediaRow = Database["public"]["Tables"]["product_media"]["Row"]
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -22,9 +23,21 @@ function formatPrice(price: number, unit: string) {
   return `Rs. ${price.toLocaleString("en-IN")} / ${unit}`
 }
 
+function mapMedia(row: MediaRow): ProductMediaAsset {
+  return {
+    url: row.url,
+    path: row.storage_path ?? row.id,
+    type: row.media_type,
+    mimeType: row.mime_type ?? "",
+    name: row.name,
+    size: row.size_bytes,
+  }
+}
+
 function mapProductToSubmission(
   product: ProductRow,
-  categoryName: string
+  categoryName: string,
+  mediaRows: MediaRow[]
 ): PendingSubmission {
   return {
     adminComment: product.admin_comment ?? "No admin comments yet.",
@@ -43,6 +56,7 @@ function mapProductToSubmission(
     unit: product.unit,
     sellerVillageCity: product.seller_village_city ?? product.seller_location,
     sellerWhatsapp: product.seller_whatsapp ?? "",
+    mediaAssets: mediaRows.map(mapMedia),
   }
 }
 
@@ -56,6 +70,29 @@ async function getCategoryNames(categoryIds: string[]) {
   const rows = (data ?? []) as Pick<CategoryRow, "id" | "name">[]
 
   return new Map(rows.map((row) => [row.id, row.name]))
+}
+
+async function getMediaByProductId(productIds: string[]) {
+  if (!productIds.length) {
+    return new Map<string, MediaRow[]>()
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("product_media")
+    .select("*")
+    .in("product_id", productIds)
+    .order("sort_order", { ascending: true })
+
+  const mediaByProductId = new Map<string, MediaRow[]>()
+
+  for (const item of data ?? []) {
+    const current = mediaByProductId.get(item.product_id) ?? []
+    current.push(item)
+    mediaByProductId.set(item.product_id, current)
+  }
+
+  return mediaByProductId
 }
 
 export async function getCurrentUserSubmissions() {
@@ -84,13 +121,15 @@ export async function getCurrentUserSubmissions() {
       .map((product) => product.category_id)
       .filter((id): id is string => Boolean(id))
   )
+  const mediaByProductId = await getMediaByProductId(products.map((product) => product.id))
 
   return products.map((product) =>
     mapProductToSubmission(
       product,
       product.category_id
         ? categories.get(product.category_id) ?? "Farm products"
-        : "Farm products"
+        : "Farm products",
+      mediaByProductId.get(product.id) ?? []
     )
   )
 }
@@ -112,13 +151,15 @@ export async function getAdminSubmissions() {
       .map((product) => product.category_id)
       .filter((id): id is string => Boolean(id))
   )
+  const mediaByProductId = await getMediaByProductId(products.map((product) => product.id))
 
   return products.map((product) =>
     mapProductToSubmission(
       product,
       product.category_id
         ? categories.get(product.category_id) ?? "Farm products"
-        : "Farm products"
+        : "Farm products",
+      mediaByProductId.get(product.id) ?? []
     )
   )
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import * as React from "react"
@@ -88,6 +89,7 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
         const comment = comments[row.id] ?? ""
         const message = messages[row.id]
         const isSaving = saving[row.id] ?? false
+        const photos = row.mediaAssets?.filter((asset) => asset.type === "image") ?? []
 
         return (
           <Card
@@ -109,6 +111,30 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
               </div>
             </CardHeader>
             <CardContent className="grid gap-7 pt-6 lg:grid-cols-2">
+              {photos.length ? (
+                <div className="space-y-3 lg:col-span-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Product photos
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {photos.map((asset) => (
+                      <a
+                        key={asset.path}
+                        href={asset.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group overflow-hidden rounded-xl border border-border/70 bg-muted"
+                      >
+                        <img
+                          src={asset.url}
+                          alt={asset.name}
+                          className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="space-y-2 lg:col-span-2">
                 <label
                   htmlFor={`status-${row.id}`}

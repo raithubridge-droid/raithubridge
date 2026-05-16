@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -54,6 +55,25 @@ export default async function MySubmissionsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-5 pt-5">
+                {item.mediaAssets?.length ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {item.mediaAssets
+                      .filter((asset) => asset.type === "image")
+                      .slice(0, 2)
+                      .map((asset) => (
+                        <div
+                          key={asset.path}
+                          className="aspect-[4/3] overflow-hidden rounded-xl border border-border/70 bg-muted"
+                        >
+                          <img
+                            src={asset.url}
+                            alt={asset.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                ) : null}
                 <div className="grid gap-4 text-base sm:grid-cols-2">
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
