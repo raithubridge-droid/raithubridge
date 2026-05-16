@@ -15,7 +15,20 @@ export const metadata: Metadata = {
   description: "Sign in to RaithuBridge.",
 }
 
-export default function SignInPage() {
+type SignInPageProps = {
+  searchParams?: Promise<{
+    next?: string
+  }>
+}
+
+function getSafeNextPath(next?: string) {
+  return next?.startsWith("/") && !next.startsWith("//") ? next : "/products"
+}
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const params = await searchParams
+  const nextPath = getSafeNextPath(params?.next)
+
   return (
     <main className="flex flex-1 flex-col justify-center px-4 py-14 sm:py-20">
       <div className="mx-auto w-full max-w-md">
@@ -27,7 +40,7 @@ export default function SignInPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignInForm />
+            <SignInForm nextPath={nextPath} />
             <p className="mt-6 text-center text-sm text-muted-foreground">
               No account?{" "}
               <Link href="/signup" className="font-medium text-primary underline-offset-4 hover:underline">

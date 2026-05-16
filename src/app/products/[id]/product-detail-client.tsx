@@ -149,8 +149,8 @@ export function ProductDetailClient({ initialProduct }: { initialProduct: Approv
                   {product.deliveryInfo}
                 </p>
                 <p>
-                  Add this item to cart to review quantities before checkout. Direct seller
-                  contact is disabled in this flow.
+                  Add this item to cart to review quantities before checkout. Seller
+                  contact details stay inside the review and order workflow.
                 </p>
               </CardContent>
             </Card>

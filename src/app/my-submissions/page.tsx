@@ -1,10 +1,12 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SAMPLE_SUBMISSIONS, type SubmissionStatus } from "@/lib/marketplace-data"
+import type { SubmissionStatus } from "@/lib/marketplace-data"
+import { getCurrentUserSubmissions } from "@/lib/product-submissions"
 
 export const metadata: Metadata = {
   title: "My Submissions",
@@ -18,7 +20,13 @@ const statusTone: Record<SubmissionStatus, string> = {
   Rejected: "bg-red-100 text-red-900 border-red-200",
 }
 
-export default function MySubmissionsPage() {
+export default async function MySubmissionsPage() {
+  const submissions = await getCurrentUserSubmissions()
+
+  if (!submissions) {
+    redirect("/signin")
+  }
+
   return (
     <main className="px-4 py-14 sm:py-20">
       <div className="mx-auto w-full max-w-6xl">
@@ -28,8 +36,7 @@ export default function MySubmissionsPage() {
               My Submissions
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Review sample product submissions, status changes, and admin comments visible
-              to the user.
+              Track your submitted products, review status, and admin comments.
             </p>
           </div>
           <Button asChild className="h-11 rounded-xl px-5 text-base font-semibold">
@@ -38,7 +45,7 @@ export default function MySubmissionsPage() {
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          {SAMPLE_SUBMISSIONS.map((item) => (
+          {submissions.map((item) => (
             <Card key={item.id} className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
               <CardHeader className="space-y-3 border-b border-border/60">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -69,9 +76,9 @@ export default function MySubmissionsPage() {
                       Location
                     </p>
                     <p className="mt-1 text-foreground">
-                      {item.villageCity}, {item.district}
+                      {item.sellerVillageCity}, {item.sellerDistrict}
                     </p>
-                    <p className="text-muted-foreground">{item.state}</p>
+                    <p className="text-muted-foreground">{item.sellerState}</p>
                   </div>
                 </div>
                 <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
@@ -84,6 +91,16 @@ export default function MySubmissionsPage() {
             </Card>
           ))}
         </div>
+        {!submissions.length ? (
+          <Card className="mt-10 border-border/70 bg-card/95 text-center shadow-md ring-1 ring-primary/5">
+            <CardContent className="p-8">
+              <p className="text-lg font-semibold text-foreground">No submissions yet.</p>
+              <p className="mt-2 text-base text-muted-foreground">
+                Submit a product and it will appear here with status and admin comments.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </main>
   )

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ImageIcon, Video, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,17 +65,92 @@ function MediaList({
 }
 
 export function FarmerProductForm() {
-  const [submitted, setSubmitted] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isLoadingCategories, setIsLoadingCategories] = React.useState(true)
+  const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
   const [photos, setPhotos] = React.useState<File[]>([])
   const [videos, setVideos] = React.useState<File[]>([])
   const [message, setMessage] = React.useState<string | null>(null)
   const photoInputRef = React.useRef<HTMLInputElement>(null)
   const videoInputRef = React.useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  React.useEffect(() => {
+    let isMounted = true
+
+    async function loadCategories() {
+      setIsLoadingCategories(true)
+
+      try {
+        const response = await fetch("/api/categories")
+        const payload = (await response.json()) as {
+          categories?: { id: string; name: string }[]
+        }
+
+        if (isMounted && payload.categories?.length) {
+          setCategories(payload.categories)
+        }
+      } catch {
+        if (isMounted) {
+          setMessage("Categories could not be loaded. Refresh and try again.")
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCategories(false)
+        }
+      }
+    }
+
+    void loadCategories()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setSubmitted(true)
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    const requestPayload = Object.fromEntries(
+      Array.from(formData.entries()).filter((entry): entry is [string, string] =>
+        typeof entry[1] === "string"
+      )
+    )
+
+    setIsSubmitting(true)
     setMessage(null)
+
+    try {
+      const response = await fetch("/api/product-submissions", {
+        body: JSON.stringify(requestPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      })
+      const responsePayload = (await response.json()) as {
+        error?: string
+        product?: {
+          id: string
+          status: string
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(responsePayload.error ?? "Unable to submit product.")
+      }
+
+      form.reset()
+      clearPhotos()
+      clearVideos()
+      router.push("/my-submissions")
+      router.refresh()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to submit product.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -117,35 +193,6 @@ export function FarmerProductForm() {
     }
   }
 
-  if (submitted) {
-    return (
-      <div
-        className="rounded-2xl border border-primary/25 bg-primary/5 px-6 py-10 text-center shadow-md"
-        role="status"
-      >
-        <p className="text-2xl font-semibold text-foreground">
-          Product submitted for review.
-        </p>
-        <p className="mt-3 text-base text-muted-foreground">
-          This is a static preview. The submission will appear in My Submissions once live
-          saving is connected.
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-8 h-11 rounded-xl px-6 text-base"
-          onClick={() => {
-            setSubmitted(false)
-            clearPhotos()
-            clearVideos()
-          }}
-        >
-          Submit another product
-        </Button>
-      </div>
-    )
-  }
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -159,24 +206,24 @@ export function FarmerProductForm() {
             <Input id="sellerName" name="sellerName" required autoComplete="name" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" name="phone" type="tel" required autoComplete="tel" placeholder="+91" />
+            <Label htmlFor="sellerPhone">Phone</Label>
+            <Input id="sellerPhone" name="sellerPhone" type="tel" required autoComplete="tel" placeholder="+91" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="whatsapp">WhatsApp number</Label>
-            <Input id="whatsapp" name="whatsapp" type="tel" required autoComplete="tel" placeholder="+91" />
+            <Label htmlFor="sellerWhatsapp">WhatsApp number</Label>
+            <Input id="sellerWhatsapp" name="sellerWhatsapp" type="tel" required autoComplete="tel" placeholder="+91" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="villageCity">Village / city</Label>
-            <Input id="villageCity" name="villageCity" required />
+            <Label htmlFor="sellerVillageCity">Village / city</Label>
+            <Input id="sellerVillageCity" name="sellerVillageCity" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="district">District</Label>
-            <Input id="district" name="district" required />
+            <Label htmlFor="sellerDistrict">District</Label>
+            <Input id="sellerDistrict" name="sellerDistrict" required />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="state">State</Label>
-            <Input id="state" name="state" required />
+            <Label htmlFor="sellerState">State</Label>
+            <Input id="sellerState" name="sellerState" required />
           </div>
         </div>
       </fieldset>
@@ -190,7 +237,28 @@ export function FarmerProductForm() {
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="category">Category</Label>
-            <Input id="category" name="category" required placeholder="e.g. Grains, Spices, Oils" />
+            <select
+              id="category"
+              name="categoryId"
+              required
+              className={cn(
+                "h-11 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base outline-none",
+                "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              )}
+            >
+              <option value="">
+                {isLoadingCategories
+                  ? "Loading categories..."
+                  : categories.length
+                    ? "Select category"
+                    : "Categories unavailable"}
+              </option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="quantity">Quantity</Label>
@@ -293,8 +361,12 @@ export function FarmerProductForm() {
         </p>
       ) : null}
 
-      <Button type="submit" className="h-12 w-full rounded-xl text-base font-semibold sm:w-auto sm:min-w-56">
-        Submit for review
+      <Button
+        type="submit"
+        className="h-12 w-full rounded-xl text-base font-semibold sm:w-auto sm:min-w-56"
+        disabled={isSubmitting || isLoadingCategories || !categories.length}
+      >
+        {isSubmitting ? "Submitting..." : "Submit for review"}
       </Button>
     </form>
   )

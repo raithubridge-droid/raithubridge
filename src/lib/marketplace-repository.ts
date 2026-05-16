@@ -15,6 +15,11 @@ type InventoryRow = Database["public"]["Tables"]["inventory"]["Row"]
 type MediaRow = Database["public"]["Tables"]["product_media"]["Row"]
 
 const productStatusLabel: Record<ProductRow["status"], ApprovedProduct["status"]> = {
+  "Approved": "Available",
+  "On Hold": "Limited",
+  "Pending": "Limited",
+  "Pending Review": "Limited",
+  "Rejected": "Limited",
   archived: "Limited",
   approved: "Available",
   available: "Available",
@@ -24,6 +29,35 @@ const productStatusLabel: Record<ProductRow["status"], ApprovedProduct["status"]
   pending: "Limited",
   rejected: "Limited",
   seasonal: "Seasonal",
+}
+
+const submissionStatusLabel: Record<ProductRow["status"], SubmissionStatus> = {
+  Approved: "Approved",
+  "On Hold": "On Hold",
+  Pending: "Pending Review",
+  "Pending Review": "Pending Review",
+  Rejected: "Rejected",
+  approved: "Approved",
+  available: "Approved",
+  limited: "Approved",
+  on_hold: "On Hold",
+  pending: "Pending Review",
+  rejected: "Rejected",
+  seasonal: "Approved",
+  archived: "Rejected",
+  draft: "Pending Review",
+}
+
+function getMarketplaceSellerInfo(value: string | null) {
+  if (!value) {
+    return "Verified RaithuBridge seller."
+  }
+
+  if (/\b(phone|whatsapp|\+?\d[\d\s-]{7,})\b/i.test(value)) {
+    return "Seller details are verified by RaithuBridge. Add the item to cart to continue purchase."
+  }
+
+  return value
 }
 
 function formatNumber(value: number) {
@@ -66,7 +100,7 @@ function mapProduct(
     inStock: inventory?.in_stock ?? Number(row.quantity_available) > 0,
     description: row.description,
     deliveryInfo: row.delivery_info ?? "Delivery details will be confirmed during checkout.",
-    sellerInfo: row.seller_info ?? "Verified RaithuBridge seller.",
+    sellerInfo: getMarketplaceSellerInfo(row.seller_info),
     mediaAssets: mediaRows.map(mapMedia),
   }
 }
@@ -77,7 +111,7 @@ async function queryProducts(ids?: string[]) {
     .from("products")
     .select("*")
     .eq("is_active", true)
-    .neq("status", "draft")
+    .in("status", ["Approved", "approved", "available", "limited", "seasonal"])
     .order("created_at", { ascending: false })
 
   if (ids?.length) {
@@ -122,7 +156,9 @@ async function queryProducts(ids?: string[]) {
   return products.map((product) =>
     mapProduct(
       product,
-      product.category_id ? categoriesById.get(product.category_id) ?? "Farm products" : "Farm products",
+      product.category_id
+        ? categoriesById.get(product.category_id) ?? "Farm products"
+        : "Farm products",
       mediaByProductId.get(product.id) ?? [],
       inventoryByProductId.get(product.id)
     )
@@ -177,38 +213,70 @@ export async function getCategories() {
   }))
 }
 
-function mapInventoryStatus(product: ApprovedProduct): SubmissionStatus {
-  if (!product.inStock) {
-    return "On Hold"
+async function queryInventoryItems() {
+  const supabase = await createClient()
+  const { data: products, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error || !products?.length) {
+    return []
   }
 
-  return product.status === "Available" || product.status === "Seasonal" ? "Approved" : "On Hold"
+  const productIds = products.map((product) => product.id)
+  const categoryIds = products
+    .map((product) => product.category_id)
+    .filter((id): id is string => Boolean(id))
+
+  const [{ data: categories }, { data: inventory }] = await Promise.all([
+    categoryIds.length
+      ? supabase.from("categories").select("id, name").in("id", categoryIds)
+      : Promise.resolve({ data: [] as Pick<CategoryRow, "id" | "name">[] }),
+    supabase.from("inventory").select("*").in("product_id", productIds),
+  ])
+
+  const categoriesById = new Map((categories ?? []).map((category) => [category.id, category.name]))
+  const inventoryByProductId = new Map(
+    (inventory ?? []).map((item) => [item.product_id, item])
+  )
+
+  return products.map<InventoryItem>((product) => {
+    const inventoryItem = inventoryByProductId.get(product.id)
+    const stockCount = Number(inventoryItem?.stock_count ?? product.quantity_available)
+
+    return {
+      id: product.id,
+      productName: product.name,
+      sellerName: product.seller_name,
+      category: product.category_id
+        ? categoriesById.get(product.category_id) ?? "Farm products"
+        : "Farm products",
+      quantity: formatNumber(Number(product.quantity_available)),
+      unit: product.unit,
+      price: formatPrice(Number(product.price), product.unit),
+      status: submissionStatusLabel[product.status],
+      location: product.seller_location,
+      stockCount,
+      inStock: inventoryItem?.in_stock ?? stockCount > 0,
+    }
+  })
 }
 
-export async function getInventory() {
-  try {
-    const products = await queryProducts()
+export async function getInventory(options: { fallbackToSamples?: boolean } = {}) {
+  const { fallbackToSamples = true } = options
 
-    if (products.length) {
-      return products.map<InventoryItem>((product) => ({
-        id: product.id,
-        productName: product.name,
-        sellerName: product.sellerName,
-        category: product.category,
-        quantity: product.quantity,
-        unit: product.unit,
-        price: product.price,
-        status: mapInventoryStatus(product),
-        location: product.sellerLocation,
-        stockCount: product.stockCount,
-        inStock: product.inStock,
-      }))
+  try {
+    const items = await queryInventoryItems()
+
+    if (items.length || !fallbackToSamples) {
+      return items
     }
   } catch {
     // Fall back below.
   }
 
-  return INVENTORY_ITEMS
+  return fallbackToSamples ? INVENTORY_ITEMS : []
 }
 
 export async function getOrCreateCart(input: { guestId?: string; userId?: string }) {
@@ -253,13 +321,13 @@ export async function updateInventoryAvailability(input: {
   const supabase = await createClient()
   const { error } = await supabase
     .from("inventory")
-    .update({
+    .upsert({
       availability_status: input.inStock ? "in_stock" : "out_of_stock",
       in_stock: input.inStock,
+      product_id: input.productId,
       stock_count: input.stockCount,
       updated_at: new Date().toISOString(),
-    })
-    .eq("product_id", input.productId)
+    }, { onConflict: "product_id" })
 
   if (error) {
     throw new Error(error.message)

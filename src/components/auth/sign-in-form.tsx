@@ -10,10 +10,29 @@ import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { hasSupabaseEnv, SUPABASE_ENV_MESSAGE } from "@/lib/supabase/env"
 
-export function SignInForm() {
+export function SignInForm({ nextPath = "/products" }: { nextPath?: string }) {
   const [message, setMessage] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const router = useRouter()
+
+  function getFriendlyAuthMessage(error: unknown) {
+    const message = error instanceof Error ? error.message : ""
+    const normalized = message.toLowerCase()
+
+    if (normalized.includes("invalid login") || normalized.includes("invalid credentials")) {
+      return "Unable to sign in. Check your email and password."
+    }
+
+    if (normalized.includes("email not confirmed")) {
+      return "Confirm your email before signing in."
+    }
+
+    if (normalized.includes("rate limit")) {
+      return "Too many sign-in attempts right now. Please wait a few minutes and try again."
+    }
+
+    return message || "Unable to sign in. Check your email and password."
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -41,11 +60,10 @@ export function SignInForm() {
         throw error
       }
 
-      router.push("/products")
+      router.push(nextPath)
       router.refresh()
     } catch (error) {
-      const fallbackMessage = "Unable to sign in. Check your email and password."
-      setMessage(error instanceof Error ? error.message : fallbackMessage)
+      setMessage(getFriendlyAuthMessage(error))
     } finally {
       setIsSubmitting(false)
     }
