@@ -7,25 +7,27 @@ import { Button } from "@/components/ui/button"
 import { getCurrentProfile } from "@/lib/auth/roles"
 
 const navLinkClass =
-  "rounded-md px-2.5 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-primary/5 hover:text-foreground"
+  "rounded-lg px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
 
 export async function SiteHeader() {
   const { user } = await getCurrentProfile()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:py-4">
         <Link
           href="/"
-          className="flex w-fit items-center gap-3 text-foreground transition-opacity hover:opacity-90"
+          className="flex w-fit min-w-0 items-center gap-3 text-foreground transition-opacity hover:opacity-90"
         >
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-amber-100 to-lime-100 shadow-sm ring-1 ring-primary/15">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-amber-100 to-lime-100 shadow-sm ring-1 ring-primary/15 sm:size-12">
             <Logo size="md" />
           </span>
-          <span className="font-heading text-2xl font-bold tracking-tight">RaithuBridge</span>
+          <span className="min-w-0 font-heading text-2xl font-bold tracking-tight">
+            RaithuBridge
+          </span>
         </Link>
         <nav
-          className="flex flex-wrap items-center gap-x-1 gap-y-2 sm:justify-end"
+          className="-mx-2 flex items-center gap-1 overflow-x-auto px-2 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0"
           aria-label="Primary"
         >
           <Link href="/products" className={navLinkClass}>

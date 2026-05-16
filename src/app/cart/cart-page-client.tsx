@@ -239,6 +239,7 @@ export function CartPageClient() {
                           variant="ghost"
                           size="icon"
                           className="h-11 rounded-none"
+                          aria-label={`Decrease quantity for ${product.name}`}
                           onClick={() => updateItem(product.id, cart.quantity - 1)}
                         >
                           <Minus className="size-4" aria-hidden />
@@ -251,6 +252,7 @@ export function CartPageClient() {
                           variant="ghost"
                           size="icon"
                           className="h-11 rounded-none"
+                          aria-label={`Increase quantity for ${product.name}`}
                           onClick={() => updateItem(product.id, cart.quantity + 1)}
                         >
                           <Plus className="size-4" aria-hidden />

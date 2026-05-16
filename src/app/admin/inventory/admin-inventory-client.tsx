@@ -1,18 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { LockKeyhole } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  INVENTORY_ITEMS,
-  type InventoryItem,
-  type SubmissionStatus,
-} from "@/lib/marketplace-data"
-
-const ADMIN_ACCESS_KEY = "raithubridge-admin-preview"
+import { Card, CardContent } from "@/components/ui/card"
+import { type InventoryItem, type SubmissionStatus } from "@/lib/marketplace-data"
 
 const statusTone: Record<SubmissionStatus, string> = {
   "Pending Review": "bg-amber-100 text-amber-900 border-amber-200",
@@ -21,42 +13,37 @@ const statusTone: Record<SubmissionStatus, string> = {
   Rejected: "bg-red-100 text-red-900 border-red-200",
 }
 
-export function AdminInventoryClient() {
-  const [hasAccess, setHasAccess] = React.useState(false)
-  const [accessCode, setAccessCode] = React.useState("")
-  const [items, setItems] = React.useState<InventoryItem[]>(INVENTORY_ITEMS)
+export function AdminInventoryClient({ initialItems }: { initialItems: InventoryItem[] }) {
+  const [items, setItems] = React.useState<InventoryItem[]>(initialItems)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [message, setMessage] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let isMounted = true
-
-    queueMicrotask(() => {
-      if (isMounted) {
-        setHasAccess(window.localStorage.getItem(ADMIN_ACCESS_KEY) === "granted")
-      }
-    })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  React.useEffect(() => {
-    if (!hasAccess) {
-      return
-    }
-
     let isMounted = true
 
     async function loadInventory() {
+      setIsLoading(true)
+      setMessage(null)
+
       try {
         const response = await fetch("/api/admin/inventory")
-        const payload = (await response.json()) as { items?: InventoryItem[] }
+        const payload = (await response.json()) as { error?: string; items?: InventoryItem[] }
 
-        if (isMounted && payload.items?.length) {
-          setItems(payload.items)
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Unable to load inventory.")
         }
-      } catch {
-        // Keep sample inventory when the API is not available.
+
+        if (isMounted) {
+          setItems(payload.items ?? [])
+        }
+      } catch (error) {
+        if (isMounted) {
+          setMessage(error instanceof Error ? error.message : "Unable to load inventory.")
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -65,16 +52,7 @@ export function AdminInventoryClient() {
     return () => {
       isMounted = false
     }
-  }, [hasAccess])
-
-  function unlockAdminPreview(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (accessCode.trim().toLowerCase() === "admin") {
-      window.localStorage.setItem(ADMIN_ACCESS_KEY, "granted")
-      setHasAccess(true)
-    }
-  }
+  }, [])
 
   function toggleAvailability(id: string) {
     const nextItem = items.find((item) => item.id === id)
@@ -89,7 +67,17 @@ export function AdminInventoryClient() {
           "Content-Type": "application/json",
         },
         method: "PATCH",
-      }).catch(() => undefined)
+      })
+        .then(async (response) => {
+          const payload = (await response.json()) as { error?: string }
+
+          if (!response.ok) {
+            throw new Error(payload.error ?? "Unable to update inventory.")
+          }
+        })
+        .catch((error) => {
+          setMessage(error instanceof Error ? error.message : "Unable to update inventory.")
+        })
     }
 
     setItems((current) =>
@@ -105,35 +93,6 @@ export function AdminInventoryClient() {
     )
   }
 
-  if (!hasAccess) {
-    return (
-      <main className="px-4 py-14 sm:py-20">
-        <div className="mx-auto w-full max-w-xl rounded-2xl border border-border/70 bg-card/95 p-8 text-center shadow-lg ring-1 ring-primary/5">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <LockKeyhole className="size-7" aria-hidden />
-          </div>
-          <h1 className="mt-5 text-3xl font-bold tracking-tight">Admin-only inventory</h1>
-          <p className="mt-3 text-base text-muted-foreground">
-            Inventory management is restricted to admin accounts. This preview uses an
-            admin code while the API enforces database access policies.
-          </p>
-          <form onSubmit={unlockAdminPreview} className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Input
-              value={accessCode}
-              onChange={(event) => setAccessCode(event.target.value)}
-              placeholder="Enter admin preview code"
-              aria-label="Admin preview code"
-            />
-            <Button type="submit" className="h-11 rounded-xl px-6 text-base font-semibold">
-              Unlock
-            </Button>
-          </form>
-          <p className="mt-3 text-sm text-muted-foreground">Preview code: admin</p>
-        </div>
-      </main>
-    )
-  }
-
   return (
     <main className="px-4 py-14 sm:py-20">
       <div className="mx-auto w-full max-w-7xl">
@@ -143,13 +102,39 @@ export function AdminInventoryClient() {
               Inventory
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Admin-only inventory view with stock counts and availability toggles backed by
-              the inventory table when Supabase is configured.
+              Admin-only inventory view with product status, stock counts, and availability
+              toggles backed by Supabase.
             </p>
           </div>
           <Badge className="w-fit rounded-full px-4 py-2 text-sm">Admin access</Badge>
         </div>
 
+        {message ? (
+          <p className="mt-8 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-base text-destructive">
+            {message}
+          </p>
+        ) : null}
+
+        {isLoading ? (
+          <Card className="mt-10 border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
+            <CardContent className="p-8 text-center text-base text-muted-foreground">
+              Loading inventory...
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!isLoading && !items.length ? (
+          <Card className="mt-10 border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
+            <CardContent className="p-8 text-center">
+              <p className="text-xl font-semibold text-foreground">No inventory yet</p>
+              <p className="mt-2 text-base text-muted-foreground">
+                Submitted products will appear here after they are saved in Supabase.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!isLoading && items.length ? (
         <div className="mt-10 overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-lg ring-1 ring-primary/5">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1120px] text-left text-base">
@@ -202,6 +187,7 @@ export function AdminInventoryClient() {
             </table>
           </div>
         </div>
+        ) : null}
       </div>
     </main>
   )

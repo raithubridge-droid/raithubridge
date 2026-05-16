@@ -59,7 +59,7 @@ const whyDirect = [
   },
   {
     title: "Stronger seller relationships",
-    body: "Connect directly with farmers and sellers, whether you are buying or listing your own products.",
+    body: "Buy with clearer product, price, and seller context, whether you are purchasing or listing your own products.",
   },
 ] as const
 
@@ -89,11 +89,12 @@ export default function Home() {
             Trusted farm product listings · India
           </Badge>
           <h1 className="font-heading max-w-4xl text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl md:leading-[1.08] lg:text-[3.25rem]">
-            Buy Farm Products Directly From Trusted Farmers And Sellers
+            Buy farm products directly from trusted farmers and sellers.
           </h1>
           <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Browse chillies, pulses, nuts, grains, and more. Compare listings, contact
-            sellers, and submit your own products for review from one simple interface.
+            Browse chillies, pulses, nuts, grains, and more. Compare listings, add
+            products to cart, and submit your own products for review from one simple
+            interface.
           </p>
           <div className="mt-10 flex w-full max-w-lg flex-col gap-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-5">
             <Button

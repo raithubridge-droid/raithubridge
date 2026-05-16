@@ -8,6 +8,11 @@ export type Json =
 
 type UserRole = "user" | "admin"
 type ProductStatus =
+  | "Pending"
+  | "Pending Review"
+  | "On Hold"
+  | "Approved"
+  | "Rejected"
   | "pending"
   | "on_hold"
   | "approved"
@@ -99,6 +104,11 @@ export type Database = {
           unit_size: string
           quantity_available: number
           seller_name: string
+          seller_phone: string | null
+          seller_whatsapp: string | null
+          seller_village_city: string | null
+          seller_district: string | null
+          seller_state: string | null
           seller_location: string
           delivery_info: string | null
           seller_info: string | null
@@ -121,6 +131,11 @@ export type Database = {
           unit_size: string
           quantity_available?: number
           seller_name: string
+          seller_phone?: string | null
+          seller_whatsapp?: string | null
+          seller_village_city?: string | null
+          seller_district?: string | null
+          seller_state?: string | null
           seller_location: string
           delivery_info?: string | null
           seller_info?: string | null
@@ -143,6 +158,11 @@ export type Database = {
           unit_size?: string
           quantity_available?: number
           seller_name?: string
+          seller_phone?: string | null
+          seller_whatsapp?: string | null
+          seller_village_city?: string | null
+          seller_district?: string | null
+          seller_state?: string | null
           seller_location?: string
           delivery_info?: string | null
           seller_info?: string | null

@@ -1,16 +1,30 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 import { AdminReviewPanel } from "@/components/admin-review-panel"
 import { Button } from "@/components/ui/button"
-import { SAMPLE_SUBMISSIONS } from "@/lib/marketplace-data"
+import { getCurrentProfile } from "@/lib/auth/roles"
+import { getAdminSubmissions } from "@/lib/product-submissions"
 
 export const metadata: Metadata = {
   title: "Admin",
   description: "Review submitted products and manage visible user comments.",
 }
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const { user, profile } = await getCurrentProfile()
+
+  if (!user) {
+    redirect("/signin")
+  }
+
+  if (profile?.role !== "admin") {
+    redirect("/unauthorized")
+  }
+
+  const submissions = await getAdminSubmissions()
+
   return (
     <main className="px-4 py-14 sm:py-20">
       <div className="mx-auto w-full max-w-5xl">
@@ -21,7 +35,7 @@ export default function AdminPage() {
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
               Review submitted products, update status, and leave comments that are visible
-              to the user. This dashboard uses sample data only for now.
+              to the user.
             </p>
           </div>
           <Button asChild variant="outline" className="h-11 rounded-xl px-5 text-base font-semibold">
@@ -29,7 +43,7 @@ export default function AdminPage() {
           </Button>
         </div>
         <div className="mt-12">
-          <AdminReviewPanel items={SAMPLE_SUBMISSIONS} />
+          <AdminReviewPanel items={submissions} />
         </div>
       </div>
     </main>

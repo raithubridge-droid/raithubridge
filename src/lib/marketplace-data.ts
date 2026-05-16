@@ -38,11 +38,11 @@ export type SubmissionStatus = "Pending Review" | "On Hold" | "Approved" | "Reje
 export type PendingSubmission = {
   id: string
   sellerName: string
-  phone: string
-  whatsapp: string
-  villageCity: string
-  district: string
-  state: string
+  sellerPhone: string
+  sellerWhatsapp: string
+  sellerVillageCity: string
+  sellerDistrict: string
+  sellerState: string
   productName: string
   category: string
   quantityAvailable: string
@@ -319,11 +319,11 @@ export const SAMPLE_SUBMISSIONS: PendingSubmission[] = [
   {
     id: "sub-101",
     sellerName: "Ramesh Reddy",
-    phone: "+91 98450 11223",
-    whatsapp: "+91 98450 11223",
-    villageCity: "Gopalpur",
-    district: "Medak",
-    state: "Telangana",
+    sellerPhone: "+91 98450 11223",
+    sellerWhatsapp: "+91 98450 11223",
+    sellerVillageCity: "Gopalpur",
+    sellerDistrict: "Medak",
+    sellerState: "Telangana",
     productName: "Cold-pressed Groundnut Oil",
     category: "Oils",
     quantityAvailable: "120",
@@ -337,11 +337,11 @@ export const SAMPLE_SUBMISSIONS: PendingSubmission[] = [
   {
     id: "sub-102",
     sellerName: "Lakshmi Devi",
-    phone: "+91 98765 44321",
-    whatsapp: "+91 98765 44321",
-    villageCity: "Kattumannarkoil",
-    district: "Cuddalore",
-    state: "Tamil Nadu",
+    sellerPhone: "+91 98765 44321",
+    sellerWhatsapp: "+91 98765 44321",
+    sellerVillageCity: "Kattumannarkoil",
+    sellerDistrict: "Cuddalore",
+    sellerState: "Tamil Nadu",
     productName: "Boiled Ponni Rice",
     category: "Grains",
     quantityAvailable: "45",
@@ -355,11 +355,11 @@ export const SAMPLE_SUBMISSIONS: PendingSubmission[] = [
   {
     id: "sub-103",
     sellerName: "Harpreet Singh",
-    phone: "+91 98155 00900",
-    whatsapp: "+91 98155 00901",
-    villageCity: "Talwandi Sabo",
-    district: "Bathinda",
-    state: "Punjab",
+    sellerPhone: "+91 98155 00900",
+    sellerWhatsapp: "+91 98155 00901",
+    sellerVillageCity: "Talwandi Sabo",
+    sellerDistrict: "Bathinda",
+    sellerState: "Punjab",
     productName: "Wheat",
     category: "Grains",
     quantityAvailable: "200",
@@ -373,11 +373,11 @@ export const SAMPLE_SUBMISSIONS: PendingSubmission[] = [
   {
     id: "sub-104",
     sellerName: "Asha Naik",
-    phone: "+91 99002 11445",
-    whatsapp: "+91 99002 11445",
-    villageCity: "Sirsi",
-    district: "Uttara Kannada",
-    state: "Karnataka",
+    sellerPhone: "+91 99002 11445",
+    sellerWhatsapp: "+91 99002 11445",
+    sellerVillageCity: "Sirsi",
+    sellerDistrict: "Uttara Kannada",
+    sellerState: "Karnataka",
     productName: "Areca Nut",
     category: "Nuts",
     quantityAvailable: "75",

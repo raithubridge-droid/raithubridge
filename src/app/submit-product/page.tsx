@@ -1,15 +1,23 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 import { FarmerProductForm } from "@/components/farmer-product-form"
 import { Button } from "@/components/ui/button"
+import { getCurrentProfile } from "@/lib/auth/roles"
 
 export const metadata: Metadata = {
   title: "Submit Product",
   description: "Submit a farm product for review on RaithuBridge.",
 }
 
-export default function SubmitProductPage() {
+export default async function SubmitProductPage() {
+  const { user } = await getCurrentProfile()
+
+  if (!user) {
+    redirect("/signin")
+  }
+
   return (
     <main className="px-4 py-14 sm:py-20">
       <div className="mx-auto w-full max-w-4xl">

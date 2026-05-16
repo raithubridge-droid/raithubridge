@@ -74,6 +74,20 @@ create table if not exists public.categories (
   created_at timestamptz not null default now()
 );
 
+insert into public.categories (name, slug, display_order)
+values
+  ('Vegetables', 'vegetables', 10),
+  ('Fruits', 'fruits', 20),
+  ('Grains', 'grains', 30),
+  ('Dairy', 'dairy', 40),
+  ('Spices', 'spices', 50),
+  ('Flowers', 'flowers', 60),
+  ('Other', 'other', 70)
+on conflict (slug) do update
+set
+  display_order = excluded.display_order,
+  name = excluded.name;
+
 -- ---------------------------------------------------------------------------
 -- Products and product media
 -- ---------------------------------------------------------------------------
@@ -90,16 +104,104 @@ create table if not exists public.products (
   unit_size text not null,
   quantity_available numeric(12, 2) not null default 0,
   seller_name text not null,
+  seller_phone text,
+  seller_whatsapp text,
+  seller_village_city text,
+  seller_district text,
+  seller_state text,
   seller_location text not null,
   delivery_info text,
   seller_info text,
-  status text not null default 'pending' check (
-    status in ('pending', 'on_hold', 'approved', 'rejected', 'available', 'limited', 'seasonal', 'draft', 'archived')
+  status text not null default 'Pending Review' check (
+    status in (
+      'Pending Review', 'On Hold', 'Approved', 'Rejected',
+      'pending', 'on_hold', 'approved', 'rejected',
+      'available', 'limited', 'seasonal', 'draft', 'archived'
+    )
   ),
   is_active boolean not null default true,
   admin_comment text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+alter table public.products add column if not exists seller_phone text;
+alter table public.products add column if not exists seller_whatsapp text;
+alter table public.products add column if not exists seller_village_city text;
+alter table public.products add column if not exists seller_district text;
+alter table public.products add column if not exists seller_state text;
+alter table public.products add column if not exists admin_comment text;
+
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'phone'
+  ) then
+    update public.products
+    set seller_phone = coalesce(seller_phone, phone);
+    alter table public.products drop column phone;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'whatsapp'
+  ) then
+    update public.products
+    set seller_whatsapp = coalesce(seller_whatsapp, whatsapp);
+    alter table public.products drop column whatsapp;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'village_city'
+  ) then
+    update public.products
+    set seller_village_city = coalesce(seller_village_city, village_city);
+    alter table public.products drop column village_city;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'district'
+  ) then
+    update public.products
+    set seller_district = coalesce(seller_district, district);
+    alter table public.products drop column district;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'state'
+  ) then
+    update public.products
+    set seller_state = coalesce(seller_state, state);
+    alter table public.products drop column state;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'category_name'
+  ) then
+    update public.products p
+    set category_id = c.id
+    from public.categories c
+    where p.category_id is null
+      and lower(c.name) = lower(p.category_name);
+
+    alter table public.products drop column category_name;
+  end if;
+end;
+$$;
+
+alter table public.products alter column status set default 'Pending Review';
+alter table public.products drop constraint if exists products_status_check;
+alter table public.products add constraint products_status_check check (
+  status in (
+    'Pending', 'Pending Review', 'On Hold', 'Approved', 'Rejected',
+    'pending', 'on_hold', 'approved', 'rejected',
+    'available', 'limited', 'seasonal', 'draft', 'archived'
+  )
 );
 
 create index if not exists products_category_idx on public.products (category_id);
@@ -277,6 +379,7 @@ with check ((id = auth.uid() and role = 'user') or public.current_user_role() = 
 
 drop policy if exists "categories_public_read" on public.categories;
 drop policy if exists "categories_admin_write" on public.categories;
+drop policy if exists "categories_authenticated_insert" on public.categories;
 
 create policy "categories_public_read"
 on public.categories for select to anon, authenticated
@@ -297,7 +400,7 @@ create policy "products_public_read_approved"
 on public.products for select to anon, authenticated
 using (
   is_active = true
-  and status in ('approved', 'available', 'limited', 'seasonal')
+  and status in ('Approved', 'approved', 'available', 'limited', 'seasonal')
 );
 
 create policy "products_submitter_read_own"
@@ -308,13 +411,13 @@ create policy "products_submitter_insert"
 on public.products for insert to authenticated
 with check (
   seller_id = auth.uid()
-  and status in ('pending', 'draft')
+  and status in ('Pending Review', 'pending', 'draft')
 );
 
 create policy "products_submitter_update_own_pending"
 on public.products for update to authenticated
-using (seller_id = auth.uid() and status in ('pending', 'draft', 'on_hold'))
-with check (seller_id = auth.uid() and status in ('pending', 'draft'));
+using (seller_id = auth.uid() and status in ('Pending Review', 'pending', 'draft', 'On Hold', 'on_hold'))
+with check (seller_id = auth.uid() and status in ('Pending Review', 'pending', 'draft'));
 
 create policy "products_admin_all"
 on public.products for all to authenticated
@@ -331,7 +434,7 @@ using (
     select 1 from public.products p
     where p.id = product_id
       and p.is_active = true
-      and p.status in ('approved', 'available', 'limited', 'seasonal')
+      and p.status in ('Approved', 'approved', 'available', 'limited', 'seasonal')
   )
 );
 
@@ -362,7 +465,7 @@ using (
     select 1 from public.products p
     where p.id = product_id
       and p.is_active = true
-      and p.status in ('approved', 'available', 'limited', 'seasonal')
+      and p.status in ('Approved', 'approved', 'available', 'limited', 'seasonal')
   )
 );
 

@@ -15,6 +15,21 @@ export function SignUpForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const router = useRouter()
 
+  function getFriendlyAuthMessage(error: unknown) {
+    const message = error instanceof Error ? error.message : ""
+    const normalized = message.toLowerCase()
+
+    if (normalized.includes("rate limit")) {
+      return "Too many signup attempts right now. Please wait a few minutes and try again."
+    }
+
+    if (normalized.includes("invalid")) {
+      return "Enter a valid email address and password."
+    }
+
+    return message || "Unable to create account."
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
@@ -72,7 +87,7 @@ export function SignUpForm() {
       router.push("/products")
       router.refresh()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to create account.")
+      setMessage(getFriendlyAuthMessage(error))
     } finally {
       setIsSubmitting(false)
     }
