@@ -1,7 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import * as React from "react"
-import { ImageIcon, Video, X } from "lucide-react"
+import { ImageIcon, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -11,7 +12,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 const MAX_PHOTOS = 6
-const MAX_VIDEOS = 3
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024
+const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
+
+type PhotoPreview = {
+  file: File
+  url: string
+}
 
 function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
@@ -21,42 +28,41 @@ function formatFileSize(size: number) {
   return `${(size / 1024 / 1024).toFixed(1)} MB`
 }
 
-function MediaList({
-  files,
-  type,
+function PhotoPreviewList({
+  photos,
   onClear,
 }: {
-  files: File[]
-  type: "photo" | "video"
+  photos: PhotoPreview[]
   onClear: () => void
 }) {
-  if (!files.length) {
+  if (!photos.length) {
     return null
   }
-
-  const Icon = type === "photo" ? ImageIcon : Video
 
   return (
     <div className="rounded-xl border border-border/70 bg-background/75 p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-foreground">
-          {files.length} {type}
-          {files.length === 1 ? "" : "s"} selected
+          {photos.length} photo
+          {photos.length === 1 ? "" : "s"} selected
         </p>
         <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={onClear}>
           <X className="size-4" aria-hidden />
           Clear
         </Button>
       </div>
-      <ul className="mt-3 space-y-2">
-        {files.map((file) => (
+      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+        {photos.map(({ file, url }) => (
           <li
             key={`${file.name}-${file.size}`}
-            className="flex items-center gap-3 rounded-lg bg-muted/60 px-3 py-2 text-sm"
+            className="overflow-hidden rounded-lg border border-border/60 bg-muted/60 text-sm"
           >
-            <Icon className="size-4 shrink-0 text-primary" aria-hidden />
-            <span className="min-w-0 flex-1 truncate">{file.name}</span>
-            <span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span>
+            <img src={url} alt={file.name} className="aspect-[4/3] w-full object-cover" />
+            <div className="flex items-center gap-3 px-3 py-2">
+              <ImageIcon className="size-4 shrink-0 text-primary" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">{file.name}</span>
+              <span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span>
+            </div>
           </li>
         ))}
       </ul>
@@ -68,12 +74,16 @@ export function FarmerProductForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isLoadingCategories, setIsLoadingCategories] = React.useState(true)
   const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
-  const [photos, setPhotos] = React.useState<File[]>([])
-  const [videos, setVideos] = React.useState<File[]>([])
+  const [photos, setPhotos] = React.useState<PhotoPreview[]>([])
   const [message, setMessage] = React.useState<string | null>(null)
   const photoInputRef = React.useRef<HTMLInputElement>(null)
-  const videoInputRef = React.useRef<HTMLInputElement>(null)
   const router = useRouter()
+
+  React.useEffect(() => {
+    return () => {
+      photos.forEach((photo) => URL.revokeObjectURL(photo.url))
+    }
+  }, [photos])
 
   React.useEffect(() => {
     let isMounted = true
@@ -112,21 +122,13 @@ export function FarmerProductForm() {
     e.preventDefault()
     const form = e.currentTarget
     const formData = new FormData(form)
-    const requestPayload = Object.fromEntries(
-      Array.from(formData.entries()).filter((entry): entry is [string, string] =>
-        typeof entry[1] === "string"
-      )
-    )
 
     setIsSubmitting(true)
     setMessage(null)
 
     try {
       const response = await fetch("/api/product-submissions", {
-        body: JSON.stringify(requestPayload),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        body: formData,
         method: "POST",
       })
       const responsePayload = (await response.json()) as {
@@ -143,7 +145,6 @@ export function FarmerProductForm() {
 
       form.reset()
       clearPhotos()
-      clearVideos()
       router.push("/my-submissions")
       router.refresh()
     } catch (error) {
@@ -162,34 +163,37 @@ export function FarmerProductForm() {
       return
     }
 
-    setPhotos(files)
-    setMessage(null)
-  }
-
-  function handleVideoChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? [])
-
-    if (files.length > MAX_VIDEOS) {
-      setMessage(`Select up to ${MAX_VIDEOS} product videos.`)
+    const invalidType = files.find((file) => !ALLOWED_PHOTO_TYPES.has(file.type))
+    if (invalidType) {
+      setMessage("Upload JPG, PNG, WebP, or GIF images only.")
       event.target.value = ""
       return
     }
 
-    setVideos(files)
+    const oversized = files.find((file) => file.size > MAX_PHOTO_SIZE_BYTES)
+    if (oversized) {
+      setMessage(`Each photo must be ${formatFileSize(MAX_PHOTO_SIZE_BYTES)} or smaller.`)
+      event.target.value = ""
+      return
+    }
+
+    setPhotos((current) => {
+      current.forEach((photo) => URL.revokeObjectURL(photo.url))
+      return files.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      }))
+    })
     setMessage(null)
   }
 
   function clearPhotos() {
-    setPhotos([])
+    setPhotos((current) => {
+      current.forEach((photo) => URL.revokeObjectURL(photo.url))
+      return []
+    })
     if (photoInputRef.current) {
       photoInputRef.current.value = ""
-    }
-  }
-
-  function clearVideos() {
-    setVideos([])
-    if (videoInputRef.current) {
-      videoInputRef.current.value = ""
     }
   }
 
@@ -302,56 +306,32 @@ export function FarmerProductForm() {
 
       <fieldset className="space-y-5">
         <legend className="text-lg font-semibold text-foreground">Product media</legend>
-        <div className="grid gap-5 lg:grid-cols-2">
-          <div className="space-y-3">
-            <Label htmlFor="product-photos">Product photos</Label>
-            <label
-              htmlFor="product-photos"
-              className="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-primary/35 bg-primary/5 px-5 py-8 text-center transition-colors hover:bg-primary/10"
-            >
-              <ImageIcon className="size-9 text-primary" aria-hidden />
-              <span className="mt-3 text-base font-semibold text-foreground">Add photos</span>
-              <span className="mt-1 text-sm text-muted-foreground">
-                JPG, PNG, WebP, or GIF. UI preview only.
-              </span>
-            </label>
-            <Input
-              ref={photoInputRef}
-              id="product-photos"
-              name="photos"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              multiple
-              className="hidden"
-              onChange={handlePhotoChange}
-            />
-            <MediaList files={photos} type="photo" onClear={clearPhotos} />
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="product-videos">Product videos</Label>
-            <label
-              htmlFor="product-videos"
-              className="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/35 bg-amber-50/60 px-5 py-8 text-center transition-colors hover:bg-amber-50"
-            >
-              <Video className="size-9 text-amber-700" aria-hidden />
-              <span className="mt-3 text-base font-semibold text-foreground">Add videos</span>
-              <span className="mt-1 text-sm text-muted-foreground">
-                MP4, WebM, or MOV. UI preview only.
-              </span>
-            </label>
-            <Input
-              ref={videoInputRef}
-              id="product-videos"
-              name="videos"
-              type="file"
-              accept="video/mp4,video/webm,video/quicktime"
-              multiple
-              className="hidden"
-              onChange={handleVideoChange}
-            />
-            <MediaList files={videos} type="video" onClear={clearVideos} />
-          </div>
+        <div className="space-y-3">
+          <Label htmlFor="product-photos">Product photos</Label>
+          <label
+            htmlFor="product-photos"
+            className="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-primary/35 bg-primary/5 px-5 py-8 text-center transition-colors hover:bg-primary/10"
+          >
+            <ImageIcon className="size-9 text-primary" aria-hidden />
+            <span className="mt-3 text-base font-semibold text-foreground">Add photos</span>
+            <span className="mt-1 text-sm text-muted-foreground">
+              JPG, PNG, WebP, or GIF. Up to {MAX_PHOTOS} photos, {formatFileSize(MAX_PHOTO_SIZE_BYTES)} each.
+            </span>
+          </label>
+          <Input
+            ref={photoInputRef}
+            id="product-photos"
+            name="photos"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+          <PhotoPreviewList photos={photos} onClear={clearPhotos} />
+          <p className="text-sm text-muted-foreground">
+            Videos are not supported yet. Add product photos for admin review.
+          </p>
         </div>
       </fieldset>
 
