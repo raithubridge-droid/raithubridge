@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { APPROVED_PRODUCTS, type ApprovedProduct } from "@/lib/marketplace-data"
+import { shouldUseSampleData } from "@/lib/supabase/env"
 
 function parsePrice(price: string) {
   const match = price.match(/\d[\d,]*(?:\.\d+)?/)
@@ -17,8 +18,10 @@ function parsePrice(price: string) {
 }
 
 export function CartPageClient() {
-  const { items, guestId, updateItem, removeItem, clearCart, syncItems } = useCart()
-  const [products, setProducts] = React.useState<ApprovedProduct[]>(APPROVED_PRODUCTS)
+  const { items, updateItem, removeItem, clearCart, syncItems } = useCart()
+  const [products, setProducts] = React.useState<ApprovedProduct[]>(
+    shouldUseSampleData() ? APPROVED_PRODUCTS : []
+  )
   const [checkoutMessage, setCheckoutMessage] = React.useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = React.useState(false)
   const itemIds = React.useMemo(() => items.map((item) => item.productId), [items])
@@ -28,7 +31,7 @@ export function CartPageClient() {
 
     async function loadCart() {
       try {
-        const response = await fetch(`/api/cart?guestId=${encodeURIComponent(guestId)}`)
+        const response = await fetch("/api/cart")
         const payload = (await response.json()) as {
           items?: { productId: string; quantity: number }[]
           products?: ApprovedProduct[]
@@ -59,7 +62,7 @@ export function CartPageClient() {
     return () => {
       isMounted = false
     }
-  }, [guestId, syncItems])
+  }, [syncItems])
 
   React.useEffect(() => {
     if (!itemIds.length) {
@@ -112,7 +115,7 @@ export function CartPageClient() {
 
     try {
       const response = await fetch("/api/orders", {
-        body: JSON.stringify({ guestId }),
+        body: JSON.stringify({}),
         headers: {
           "Content-Type": "application/json",
         },
@@ -165,8 +168,7 @@ export function CartPageClient() {
           <div>
             <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">Cart</h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Guest cart is saved in this browser and syncs with the cart table when
-              Supabase is configured.
+              Sign in to sync cart items and create orders from your selected products.
             </p>
           </div>
           <Button variant="outline" className="h-11 rounded-xl px-5 text-base" onClick={clearCart}>

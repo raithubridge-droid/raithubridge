@@ -104,6 +104,8 @@ export async function POST(request: NextRequest) {
         name: productName,
         price,
         quantity_available: quantity,
+        review_status: "Pending Review",
+        availability_status: "Inactive",
         seller_id: user.id,
         seller_info: "Seller contact details are available to admins for review.",
         seller_location: sellerLocation,
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
         seller_district: sellerDistrict,
         seller_state: sellerState,
       })
-      .select("id, status")
+      .select("id, status, review_status, availability_status")
       .single()
 
     if (productError || !product) {

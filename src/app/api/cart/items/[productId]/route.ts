@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server"
 import { getOrCreateCart } from "@/lib/marketplace-repository"
 import { createClient } from "@/lib/supabase/server"
 
+const SIGN_IN_CART_MESSAGE = "Sign in to use your cart."
+
 type CartItemRouteContext = {
   params: Promise<{
     productId: string
@@ -10,12 +12,17 @@ type CartItemRouteContext = {
 }
 
 async function resolveCart(request: NextRequest) {
+  void request
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  const guestId = request.nextUrl.searchParams.get("guestId") ?? undefined
-  const cart = await getOrCreateCart({ guestId, userId: user?.id })
+
+  if (!user) {
+    throw new Error(SIGN_IN_CART_MESSAGE)
+  }
+
+  const cart = await getOrCreateCart({ userId: user.id })
 
   return { cart, supabase }
 }
@@ -46,9 +53,10 @@ export async function PATCH(request: NextRequest, { params }: CartItemRouteConte
 
     return NextResponse.json({ ok: true })
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to update cart item"
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to update cart item" },
-      { status: 400 }
+      { error: message },
+      { status: message === SIGN_IN_CART_MESSAGE ? 401 : 400 }
     )
   }
 }
@@ -70,9 +78,10 @@ export async function DELETE(request: NextRequest, { params }: CartItemRouteCont
 
     return NextResponse.json({ ok: true })
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to remove cart item"
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to remove cart item" },
-      { status: 400 }
+      { error: message },
+      { status: message === SIGN_IN_CART_MESSAGE ? 401 : 400 }
     )
   }
 }

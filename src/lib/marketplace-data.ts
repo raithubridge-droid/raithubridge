@@ -1,3 +1,5 @@
+import type { ProductAvailabilityStatus, ProductReviewStatus } from "@/lib/domain"
+
 export type DiscoveryListing = {
   id: string
   name: string
@@ -15,7 +17,7 @@ export type ApprovedProduct = {
   quantity: string
   unit: string
   unitSize: string
-  status: "Available" | "Limited" | "Seasonal"
+  status: ProductAvailabilityStatus
   stockCount: number
   inStock: boolean
   description: string
@@ -33,7 +35,7 @@ export type ProductMediaAsset = {
   size: number
 }
 
-export type SubmissionStatus = "Pending Review" | "On Hold" | "Approved" | "Rejected"
+export type SubmissionStatus = ProductReviewStatus
 
 export type PendingSubmission = {
   id: string
@@ -107,7 +109,7 @@ export const APPROVED_PRODUCTS: ApprovedProduct[] = [
     quantity: "400",
     unit: "kg",
     unitSize: "1 kg packets and 25 kg sacks",
-    status: "Available",
+    status: "Active",
     stockCount: 400,
     inStock: true,
     description:
@@ -143,7 +145,7 @@ export const APPROVED_PRODUCTS: ApprovedProduct[] = [
     quantity: "2",
     unit: "tonnes",
     unitSize: "50 kg bags",
-    status: "Available",
+    status: "Active",
     stockCount: 2000,
     inStock: true,
     description:
@@ -179,7 +181,7 @@ export const APPROVED_PRODUCTS: ApprovedProduct[] = [
     quantity: "350",
     unit: "kg",
     unitSize: "10 kg cartons",
-    status: "Limited",
+    status: "Active",
     stockCount: 350,
     inStock: true,
     description:
@@ -215,7 +217,7 @@ export const APPROVED_PRODUCTS: ApprovedProduct[] = [
     quantity: "1.2",
     unit: "tonnes",
     unitSize: "25 kg bags",
-    status: "Seasonal",
+    status: "Active",
     stockCount: 1200,
     inStock: true,
     description:
@@ -251,7 +253,7 @@ export const APPROVED_PRODUCTS: ApprovedProduct[] = [
     quantity: "800",
     unit: "kg",
     unitSize: "10 kg and 25 kg bags",
-    status: "Available",
+    status: "Active",
     stockCount: 800,
     inStock: true,
     description:
@@ -287,7 +289,7 @@ export const APPROVED_PRODUCTS: ApprovedProduct[] = [
     quantity: "12",
     unit: "tonnes",
     unitSize: "26 kg bags",
-    status: "Available",
+    status: "Active",
     stockCount: 12000,
     inStock: true,
     description:

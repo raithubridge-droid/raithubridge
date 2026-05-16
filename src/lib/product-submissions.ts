@@ -1,24 +1,10 @@
-import type { PendingSubmission, SubmissionStatus } from "@/lib/marketplace-data"
+import type { PendingSubmission } from "@/lib/marketplace-data"
+import { normalizeReviewStatus } from "@/lib/domain"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/types/database"
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"]
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"]
-
-const statusMap: Record<string, SubmissionStatus> = {
-  Approved: "Approved",
-  "On Hold": "On Hold",
-  Pending: "Pending Review",
-  "Pending Review": "Pending Review",
-  Rejected: "Rejected",
-  approved: "Approved",
-  available: "Approved",
-  limited: "Approved",
-  on_hold: "On Hold",
-  pending: "Pending Review",
-  rejected: "Rejected",
-  seasonal: "Approved",
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -52,7 +38,7 @@ function mapProductToSubmission(
     quantityAvailable: formatNumber(Number(product.quantity_available)),
     sellerName: product.seller_name,
     sellerState: product.seller_state ?? "",
-    status: statusMap[product.status] ?? "Pending Review",
+    status: normalizeReviewStatus(product.review_status ?? product.status),
     submittedAt: formatDate(product.created_at),
     unit: product.unit,
     sellerVillageCity: product.seller_village_city ?? product.seller_location,

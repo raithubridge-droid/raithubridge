@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { ProductDetailClient } from "@/app/products/[id]/product-detail-client"
 import { APPROVED_PRODUCTS } from "@/lib/marketplace-data"
 import { getProduct } from "@/lib/marketplace-repository"
+import { shouldUseSampleData } from "@/lib/supabase/env"
 
 type ProductDetailPageProps = {
   params: Promise<{
@@ -12,9 +13,11 @@ type ProductDetailPageProps = {
 }
 
 export function generateStaticParams() {
-  return APPROVED_PRODUCTS.map((product) => ({
-    id: product.id,
-  }))
+  return shouldUseSampleData()
+    ? APPROVED_PRODUCTS.map((product) => ({
+        id: product.id,
+      }))
+    : []
 }
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {

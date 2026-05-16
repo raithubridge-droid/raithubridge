@@ -24,6 +24,7 @@ import {
   DISCOVERY_LISTINGS,
   PRICE_VARIES_NOTE,
 } from "@/lib/marketplace-data"
+import { shouldUseSampleData } from "@/lib/supabase/env"
 
 const productSteps = [
   {
@@ -64,7 +65,7 @@ const whyDirect = [
 ] as const
 
 export default function Home() {
-  const popular = APPROVED_PRODUCTS.slice(0, 4)
+  const popular = shouldUseSampleData() ? APPROVED_PRODUCTS.slice(0, 4) : []
 
   return (
     <main>
@@ -159,6 +160,7 @@ export default function Home() {
         </div>
       </section>
 
+      {popular.length ? (
       <section className="border-b border-border/60 bg-gradient-to-b from-background via-amber-50/20 to-background px-4 py-16 dark:via-primary/5 sm:py-24">
         <div className="mx-auto w-full max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -191,6 +193,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      ) : null}
 
       <section className="border-b border-border/60 bg-gradient-to-br from-muted/50 via-background to-accent/25 px-4 py-16 sm:py-24">
         <div className="mx-auto w-full max-w-6xl">

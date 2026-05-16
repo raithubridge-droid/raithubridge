@@ -119,6 +119,12 @@ create table if not exists public.products (
       'available', 'limited', 'seasonal', 'draft', 'archived'
     )
   ),
+  review_status text not null default 'Pending Review' check (
+    review_status in ('Pending Review', 'On Hold', 'Approved', 'Rejected')
+  ),
+  availability_status text not null default 'Inactive' check (
+    availability_status in ('Active', 'Inactive', 'Sold Out')
+  ),
   is_active boolean not null default true,
   admin_comment text,
   created_at timestamptz not null default now(),
@@ -207,6 +213,48 @@ alter table public.products add constraint products_status_check check (
 create index if not exists products_category_idx on public.products (category_id);
 create index if not exists products_seller_idx on public.products (seller_id);
 create index if not exists products_active_status_idx on public.products (is_active, status);
+create index if not exists products_review_availability_idx
+on public.products (review_status, availability_status);
+
+alter table public.products
+add column if not exists review_status text not null default 'Pending Review';
+
+alter table public.products
+add column if not exists availability_status text not null default 'Inactive';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'products_review_status_check'
+  ) then
+    alter table public.products
+    add constraint products_review_status_check
+    check (review_status in ('Pending Review', 'On Hold', 'Approved', 'Rejected'));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'products_availability_status_check'
+  ) then
+    alter table public.products
+    add constraint products_availability_status_check
+    check (availability_status in ('Active', 'Inactive', 'Sold Out'));
+  end if;
+end $$;
+
+update public.products
+set
+  review_status = case
+    when status in ('Approved', 'approved', 'available', 'limited', 'seasonal') then 'Approved'
+    when status in ('On Hold', 'on_hold') then 'On Hold'
+    when status in ('Rejected', 'rejected', 'archived') then 'Rejected'
+    else 'Pending Review'
+  end,
+  availability_status = case
+    when is_active = false then 'Inactive'
+    when quantity_available <= 0 then 'Sold Out'
+    when status in ('Approved', 'approved', 'available', 'limited', 'seasonal') then 'Active'
+    else 'Inactive'
+  end;
 
 drop trigger if exists set_products_updated_at on public.products;
 create trigger set_products_updated_at
@@ -236,7 +284,7 @@ create table if not exists public.inventory (
   product_id uuid not null unique references public.products (id) on delete cascade,
   stock_count numeric(12, 2) not null default 0,
   in_stock boolean not null default true,
-  availability_status text not null default 'in_stock' check (availability_status in ('in_stock', 'out_of_stock')),
+  availability_status text not null default 'Active' check (availability_status in ('Active', 'Inactive', 'Sold Out')),
   updated_at timestamptz not null default now()
 );
 
@@ -244,6 +292,20 @@ drop trigger if exists set_inventory_updated_at on public.inventory;
 create trigger set_inventory_updated_at
 before update on public.inventory
 for each row execute function public.set_updated_at();
+
+alter table public.inventory
+drop constraint if exists inventory_availability_status_check;
+
+update public.inventory
+set availability_status = case
+  when in_stock = false or stock_count <= 0 then 'Sold Out'
+  else 'Active'
+end
+where availability_status in ('in_stock', 'out_of_stock');
+
+alter table public.inventory
+add constraint inventory_availability_status_check
+check (availability_status in ('Active', 'Inactive', 'Sold Out'));
 
 -- ---------------------------------------------------------------------------
 -- Carts and cart items
@@ -400,7 +462,8 @@ create policy "products_public_read_approved"
 on public.products for select to anon, authenticated
 using (
   is_active = true
-  and status in ('Approved', 'approved', 'available', 'limited', 'seasonal')
+  and review_status = 'Approved'
+  and availability_status = 'Active'
 );
 
 create policy "products_submitter_read_own"
@@ -411,13 +474,13 @@ create policy "products_submitter_insert"
 on public.products for insert to authenticated
 with check (
   seller_id = auth.uid()
-  and status in ('Pending Review', 'pending', 'draft')
+  and review_status = 'Pending Review'
 );
 
 create policy "products_submitter_update_own_pending"
 on public.products for update to authenticated
-using (seller_id = auth.uid() and status in ('Pending Review', 'pending', 'draft', 'On Hold', 'on_hold'))
-with check (seller_id = auth.uid() and status in ('Pending Review', 'pending', 'draft'));
+using (seller_id = auth.uid() and review_status in ('Pending Review', 'On Hold'))
+with check (seller_id = auth.uid() and review_status = 'Pending Review');
 
 create policy "products_admin_all"
 on public.products for all to authenticated
@@ -434,7 +497,8 @@ using (
     select 1 from public.products p
     where p.id = product_id
       and p.is_active = true
-      and p.status in ('Approved', 'approved', 'available', 'limited', 'seasonal')
+      and p.review_status = 'Approved'
+      and p.availability_status = 'Active'
   )
 );
 
@@ -465,7 +529,8 @@ using (
     select 1 from public.products p
     where p.id = product_id
       and p.is_active = true
-      and p.status in ('Approved', 'approved', 'available', 'limited', 'seasonal')
+      and p.review_status = 'Approved'
+      and p.availability_status = 'Active'
   )
 );
 

@@ -50,7 +50,6 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
-    guestId?: string
     customerName?: string
     customerPhone?: string
   }
@@ -68,7 +67,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const cart = await getOrCreateCart({ guestId: body.guestId, userId: user.id })
+    const cart = await getOrCreateCart({ userId: user.id })
     const { data: cartItems, error: cartItemsError } = await supabase
       .from("cart_items")
       .select("product_id, quantity")

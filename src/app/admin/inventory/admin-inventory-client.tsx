@@ -4,14 +4,8 @@ import * as React from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { type InventoryItem, type SubmissionStatus } from "@/lib/marketplace-data"
-
-const statusTone: Record<SubmissionStatus, string> = {
-  "Pending Review": "bg-amber-100 text-amber-900 border-amber-200",
-  "On Hold": "bg-blue-100 text-blue-900 border-blue-200",
-  Approved: "bg-emerald-100 text-emerald-900 border-emerald-200",
-  Rejected: "bg-red-100 text-red-900 border-red-200",
-}
+import { REVIEW_STATUS_TONE_CLASS } from "@/lib/domain"
+import { type InventoryItem } from "@/lib/marketplace-data"
 
 export function AdminInventoryClient({ initialItems }: { initialItems: InventoryItem[] }) {
   const [items, setItems] = React.useState<InventoryItem[]>(initialItems)
@@ -162,7 +156,7 @@ export function AdminInventoryClient({ initialItems }: { initialItems: Inventory
                     <td className="px-5 py-4 text-muted-foreground">{item.unit}</td>
                     <td className="px-5 py-4 text-muted-foreground">{item.price}</td>
                     <td className="px-5 py-4">
-                      <Badge className={`border px-3 py-1 text-sm ${statusTone[item.status]}`}>
+                      <Badge className={`border px-3 py-1 text-sm ${REVIEW_STATUS_TONE_CLASS[item.status]}`}>
                         {item.status}
                       </Badge>
                     </td>

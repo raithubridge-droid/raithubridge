@@ -13,17 +13,15 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import type { PendingSubmission, SubmissionStatus } from "@/lib/marketplace-data"
-
-const statusTone: Record<SubmissionStatus, string> = {
-  "Pending Review": "bg-amber-100 text-amber-900 border-amber-200",
-  "On Hold": "bg-blue-100 text-blue-900 border-blue-200",
-  Approved: "bg-emerald-100 text-emerald-900 border-emerald-200",
-  Rejected: "bg-red-100 text-red-900 border-red-200",
-}
+import {
+  PRODUCT_REVIEW_STATUSES,
+  REVIEW_STATUS_TONE_CLASS,
+  type ProductReviewStatus,
+} from "@/lib/domain"
+import type { PendingSubmission } from "@/lib/marketplace-data"
 
 export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
-  const [states, setStates] = React.useState<Record<string, SubmissionStatus>>(() =>
+  const [states, setStates] = React.useState<Record<string, ProductReviewStatus>>(() =>
     Object.fromEntries(items.map((i) => [i.id, i.status]))
   )
   const [comments, setComments] = React.useState<Record<string, string>>(() =>
@@ -32,14 +30,14 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
   const [messages, setMessages] = React.useState<Record<string, string>>({})
   const [saving, setSaving] = React.useState<Record<string, boolean>>({})
 
-  function updateStatus(id: string, status: SubmissionStatus) {
+  function updateStatus(id: string, status: ProductReviewStatus) {
     setStates((current) => ({
       ...current,
       [id]: status,
     }))
   }
 
-  async function saveSubmission(id: string, status: SubmissionStatus) {
+  async function saveSubmission(id: string, status: ProductReviewStatus) {
     setSaving((current) => ({ ...current, [id]: true }))
     setMessages((current) => ({ ...current, [id]: "" }))
 
@@ -105,7 +103,7 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{row.category}</Badge>
-                <Badge className={`border px-3 py-1 text-sm ${statusTone[status]}`}>
+                <Badge className={`border px-3 py-1 text-sm ${REVIEW_STATUS_TONE_CLASS[status]}`}>
                   {status}
                 </Badge>
               </div>
@@ -122,14 +120,15 @@ export function AdminReviewPanel({ items }: { items: PendingSubmission[] }) {
                   id={`status-${row.id}`}
                   value={status}
                   onChange={(event) =>
-                    updateStatus(row.id, event.target.value as SubmissionStatus)
+                    updateStatus(row.id, event.target.value as ProductReviewStatus)
                   }
                   className="h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:max-w-xs"
                 >
-                  <option value="Pending Review">Pending</option>
-                  <option value="On Hold">On Hold</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
+                  {PRODUCT_REVIEW_STATUSES.map((option) => (
+                    <option key={option} value={option}>
+                      {option === "Pending Review" ? "Pending" : option}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
