@@ -3,15 +3,22 @@ import { NextResponse, type NextRequest } from "next/server"
 import { getOrCreateCart, getProducts } from "@/lib/marketplace-repository"
 import { createClient } from "@/lib/supabase/server"
 
+const SIGN_IN_CART_MESSAGE = "Sign in to use your cart."
+
 export async function GET(request: NextRequest) {
-  const guestId = request.nextUrl.searchParams.get("guestId") ?? undefined
+  void request
 
   try {
     const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    const cart = await getOrCreateCart({ guestId, userId: user?.id })
+
+    if (!user) {
+      return NextResponse.json({ error: SIGN_IN_CART_MESSAGE }, { status: 401 })
+    }
+
+    const cart = await getOrCreateCart({ userId: user.id })
     const { data: cartItems, error } = await supabase
       .from("cart_items")
       .select("product_id, quantity")
@@ -28,20 +35,28 @@ export async function GET(request: NextRequest) {
     const products = await getProducts(items.map((item) => item.productId))
 
     return NextResponse.json({ cartId: cart.id, items, products })
-  } catch {
-    return NextResponse.json({ cartId: null, items: [], products: [] })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unable to load cart." },
+      { status: 400 }
+    )
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const guestId = request.nextUrl.searchParams.get("guestId") ?? undefined
+  void request
 
   try {
     const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    const cart = await getOrCreateCart({ guestId, userId: user?.id })
+
+    if (!user) {
+      return NextResponse.json({ error: SIGN_IN_CART_MESSAGE }, { status: 401 })
+    }
+
+    const cart = await getOrCreateCart({ userId: user.id })
     const { error } = await supabase.from("cart_items").delete().eq("cart_id", cart.id)
 
     if (error) {

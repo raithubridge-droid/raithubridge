@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 type UserRole = "user" | "admin"
+type ProductReviewStatus = "Pending Review" | "On Hold" | "Approved" | "Rejected"
+type ProductAvailabilityStatus = "Active" | "Inactive" | "Sold Out"
 type ProductStatus =
   | "Pending"
   | "Pending Review"
@@ -22,7 +24,6 @@ type ProductStatus =
   | "seasonal"
   | "draft"
   | "archived"
-type AvailabilityStatus = "in_stock" | "out_of_stock"
 type CartStatus = "active" | "converted" | "abandoned"
 type OrderStatus = "pending" | "confirmed" | "cancelled" | "paid"
 type PaymentStatus = "pending" | "authorized" | "paid" | "failed" | "refunded"
@@ -113,6 +114,8 @@ export type Database = {
           delivery_info: string | null
           seller_info: string | null
           status: ProductStatus
+          review_status: ProductReviewStatus
+          availability_status: ProductAvailabilityStatus
           is_active: boolean
           admin_comment: string | null
           created_at: string
@@ -140,6 +143,8 @@ export type Database = {
           delivery_info?: string | null
           seller_info?: string | null
           status?: ProductStatus
+          review_status?: ProductReviewStatus
+          availability_status?: ProductAvailabilityStatus
           is_active?: boolean
           admin_comment?: string | null
           created_at?: string
@@ -167,6 +172,8 @@ export type Database = {
           delivery_info?: string | null
           seller_info?: string | null
           status?: ProductStatus
+          review_status?: ProductReviewStatus
+          availability_status?: ProductAvailabilityStatus
           is_active?: boolean
           admin_comment?: string | null
           created_at?: string
@@ -219,7 +226,7 @@ export type Database = {
           product_id: string
           stock_count: number
           in_stock: boolean
-          availability_status: AvailabilityStatus
+          availability_status: ProductAvailabilityStatus
           updated_at: string
         }
         Insert: {
@@ -227,7 +234,7 @@ export type Database = {
           product_id: string
           stock_count?: number
           in_stock?: boolean
-          availability_status?: AvailabilityStatus
+          availability_status?: ProductAvailabilityStatus
           updated_at?: string
         }
         Update: {
@@ -235,7 +242,7 @@ export type Database = {
           product_id?: string
           stock_count?: number
           in_stock?: boolean
-          availability_status?: AvailabilityStatus
+          availability_status?: ProductAvailabilityStatus
           updated_at?: string
         }
         Relationships: []

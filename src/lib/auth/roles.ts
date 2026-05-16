@@ -1,20 +1,10 @@
 import { redirect } from "next/navigation"
 
+import { ROLE_HOME, ROLE_LABELS, type UserRole } from "@/lib/domain"
 import { createClient } from "@/lib/supabase/server"
 import { hasSupabaseEnv } from "@/lib/supabase/env"
-import type { Database } from "@/types/database"
 
-export type UserRole = Database["public"]["Tables"]["profiles"]["Row"]["role"]
-
-export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: "Admin",
-  user: "User",
-}
-
-export const ROLE_HOME: Record<UserRole, string> = {
-  admin: "/admin",
-  user: "/products",
-}
+export { ROLE_HOME, ROLE_LABELS, type UserRole }
 
 export type AuthProfile = {
   id: string

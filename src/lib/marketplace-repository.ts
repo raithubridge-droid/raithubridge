@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
 import {
+  normalizeAvailabilityStatus,
+  normalizeReviewStatus,
+  type ProductAvailabilityStatus,
+} from "@/lib/domain"
+import {
   APPROVED_PRODUCTS,
   INVENTORY_ITEMS,
   type ApprovedProduct,
@@ -7,46 +12,13 @@ import {
   type ProductMediaAsset,
   type SubmissionStatus,
 } from "@/lib/marketplace-data"
+import { shouldUseSampleData } from "@/lib/supabase/env"
 import type { Database } from "@/types/database"
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"]
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"]
 type InventoryRow = Database["public"]["Tables"]["inventory"]["Row"]
 type MediaRow = Database["public"]["Tables"]["product_media"]["Row"]
-
-const productStatusLabel: Record<ProductRow["status"], ApprovedProduct["status"]> = {
-  "Approved": "Available",
-  "On Hold": "Limited",
-  "Pending": "Limited",
-  "Pending Review": "Limited",
-  "Rejected": "Limited",
-  archived: "Limited",
-  approved: "Available",
-  available: "Available",
-  draft: "Limited",
-  limited: "Limited",
-  on_hold: "Limited",
-  pending: "Limited",
-  rejected: "Limited",
-  seasonal: "Seasonal",
-}
-
-const submissionStatusLabel: Record<ProductRow["status"], SubmissionStatus> = {
-  Approved: "Approved",
-  "On Hold": "On Hold",
-  Pending: "Pending Review",
-  "Pending Review": "Pending Review",
-  Rejected: "Rejected",
-  approved: "Approved",
-  available: "Approved",
-  limited: "Approved",
-  on_hold: "On Hold",
-  pending: "Pending Review",
-  rejected: "Rejected",
-  seasonal: "Approved",
-  archived: "Rejected",
-  draft: "Pending Review",
-}
 
 function getMarketplaceSellerInfo(value: string | null) {
   if (!value) {
@@ -58,6 +30,26 @@ function getMarketplaceSellerInfo(value: string | null) {
   }
 
   return value
+}
+
+function getProductReviewStatus(row: ProductRow): SubmissionStatus {
+  return normalizeReviewStatus(row.review_status ?? row.status)
+}
+
+function getProductAvailabilityStatus(
+  row: ProductRow,
+  inventory?: InventoryRow
+): ProductAvailabilityStatus {
+  if (inventory?.availability_status) {
+    return normalizeAvailabilityStatus(inventory.availability_status, {
+      quantityAvailable: Number(inventory.stock_count),
+    })
+  }
+
+  return normalizeAvailabilityStatus(row.availability_status ?? row.status, {
+    isActive: row.is_active,
+    quantityAvailable: Number(row.quantity_available),
+  })
 }
 
 function formatNumber(value: number) {
@@ -95,7 +87,7 @@ function mapProduct(
     quantity: formatNumber(Number(row.quantity_available)),
     unit: row.unit,
     unitSize: row.unit_size,
-    status: productStatusLabel[row.status],
+    status: getProductAvailabilityStatus(row, inventory),
     stockCount: Number(inventory?.stock_count ?? row.quantity_available),
     inStock: inventory?.in_stock ?? Number(row.quantity_available) > 0,
     description: row.description,
@@ -111,7 +103,8 @@ async function queryProducts(ids?: string[]) {
     .from("products")
     .select("*")
     .eq("is_active", true)
-    .in("status", ["Approved", "approved", "available", "limited", "seasonal"])
+    .or("review_status.eq.Approved,status.in.(Approved,approved,available,limited,seasonal)")
+    .eq("availability_status", "Active")
     .order("created_at", { ascending: false })
 
   if (ids?.length) {
@@ -168,16 +161,18 @@ async function queryProducts(ids?: string[]) {
 export async function getProducts(ids?: string[]) {
   try {
     const products = await queryProducts(ids)
-    if (products.length) {
+    if (products.length || !shouldUseSampleData()) {
       return products
     }
   } catch {
-    // Local development can run before Supabase env vars or schema are ready.
+    // Local development can opt into sample fixtures before Supabase is ready.
   }
 
-  return ids?.length
-    ? APPROVED_PRODUCTS.filter((product) => ids.includes(product.id))
-    : APPROVED_PRODUCTS
+  return shouldUseSampleData()
+    ? ids?.length
+      ? APPROVED_PRODUCTS.filter((product) => ids.includes(product.id))
+      : APPROVED_PRODUCTS
+    : []
 }
 
 export async function getProduct(id: string) {
@@ -202,15 +197,17 @@ export async function getCategories() {
       }))
     }
   } catch {
-    // Fall back to categories derived from sample products.
+    // Fall back only when sample fixtures are explicitly enabled.
   }
 
-  return Array.from(new Set(APPROVED_PRODUCTS.map((product) => product.category))).map((name) => ({
-    id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    name,
-    slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    description: null,
-  }))
+  return shouldUseSampleData()
+    ? Array.from(new Set(APPROVED_PRODUCTS.map((product) => product.category))).map((name) => ({
+        id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        name,
+        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        description: null,
+      }))
+    : []
 }
 
 async function queryInventoryItems() {
@@ -255,7 +252,7 @@ async function queryInventoryItems() {
       quantity: formatNumber(Number(product.quantity_available)),
       unit: product.unit,
       price: formatPrice(Number(product.price), product.unit),
-      status: submissionStatusLabel[product.status],
+      status: getProductReviewStatus(product),
       location: product.seller_location,
       stockCount,
       inStock: inventoryItem?.in_stock ?? stockCount > 0,
@@ -264,7 +261,7 @@ async function queryInventoryItems() {
 }
 
 export async function getInventory(options: { fallbackToSamples?: boolean } = {}) {
-  const { fallbackToSamples = true } = options
+  const { fallbackToSamples = shouldUseSampleData() } = options
 
   try {
     const items = await queryInventoryItems()
@@ -279,15 +276,14 @@ export async function getInventory(options: { fallbackToSamples?: boolean } = {}
   return fallbackToSamples ? INVENTORY_ITEMS : []
 }
 
-export async function getOrCreateCart(input: { guestId?: string; userId?: string }) {
+export async function getOrCreateCart(input: { userId?: string }) {
   const supabase = await createClient()
-  const identity: { user_id?: string; guest_id?: string } = input.userId
-    ? { user_id: input.userId }
-    : { guest_id: input.guestId }
 
-  if (!identity.user_id && !identity.guest_id) {
-    throw new Error("Cart requires a user id or guest id.")
+  if (!input.userId) {
+    throw new Error("Sign in to use your cart.")
   }
+
+  const identity = { user_id: input.userId }
 
   const { data: existingCart } = await supabase
     .from("carts")
@@ -319,10 +315,11 @@ export async function updateInventoryAvailability(input: {
   stockCount: number
 }) {
   const supabase = await createClient()
+  const availabilityStatus = input.inStock && input.stockCount > 0 ? "Active" : "Sold Out"
   const { error } = await supabase
     .from("inventory")
     .upsert({
-      availability_status: input.inStock ? "in_stock" : "out_of_stock",
+      availability_status: availabilityStatus,
       in_stock: input.inStock,
       product_id: input.productId,
       stock_count: input.stockCount,
@@ -331,5 +328,18 @@ export async function updateInventoryAvailability(input: {
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  const { error: productError } = await supabase
+    .from("products")
+    .update({
+      availability_status: availabilityStatus,
+      is_active: availabilityStatus === "Active",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", input.productId)
+
+  if (productError) {
+    throw new Error(productError.message)
   }
 }

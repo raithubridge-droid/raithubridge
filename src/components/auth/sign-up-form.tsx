@@ -15,36 +15,26 @@ export function SignUpForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const router = useRouter()
 
-  function getFriendlyAuthMessage(error: unknown) {
-    const message = error instanceof Error ? error.message : ""
-    const normalized = message.toLowerCase()
-
-    if (normalized.includes("rate limit")) {
-      return "Too many signup attempts right now. Please wait a few minutes and try again."
-    }
-
-    if (normalized.includes("invalid")) {
-      return "Enter a valid email address and password."
-    }
-
-    return message || "Unable to create account."
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-
-    if (!hasSupabaseEnv()) {
-      setMessage(SUPABASE_ENV_MESSAGE)
-      return
-    }
 
     const formData = new FormData(e.currentTarget)
     const fullName = String(formData.get("name") ?? "").trim()
     const email = String(formData.get("email") ?? "").trim()
     const password = String(formData.get("password") ?? "")
 
-    if (password.length < 8) {
-      setMessage("Use a password with at least 8 characters.")
+    if (!email || !email.includes("@")) {
+      setMessage("Please enter a valid email address.")
+      return
+    }
+
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters.")
+      return
+    }
+
+    if (!hasSupabaseEnv()) {
+      setMessage(SUPABASE_ENV_MESSAGE)
       return
     }
 
@@ -87,7 +77,7 @@ export function SignUpForm() {
       router.push("/products")
       router.refresh()
     } catch (error) {
-      setMessage(getFriendlyAuthMessage(error))
+      setMessage(error instanceof Error ? error.message : "Unable to create account.")
     } finally {
       setIsSubmitting(false)
     }
@@ -98,7 +88,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <Button
         type="button"
         variant="outline"
@@ -138,7 +128,7 @@ export function SignUpForm() {
           type="password"
           autoComplete="new-password"
           required
-          placeholder="At least 8 characters"
+          placeholder="At least 6 characters"
         />
       </div>
       {message ? (

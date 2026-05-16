@@ -3,9 +3,10 @@ import { NextResponse, type NextRequest } from "next/server"
 import { getOrCreateCart } from "@/lib/marketplace-repository"
 import { createClient } from "@/lib/supabase/server"
 
+const SIGN_IN_CART_MESSAGE = "Sign in to use your cart."
+
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as {
-    guestId?: string
     productId?: string
     quantity?: number
   }
@@ -19,7 +20,12 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    const cart = await getOrCreateCart({ guestId: body.guestId, userId: user?.id })
+
+    if (!user) {
+      return NextResponse.json({ error: SIGN_IN_CART_MESSAGE }, { status: 401 })
+    }
+
+    const cart = await getOrCreateCart({ userId: user.id })
     const quantity = Math.max(1, Math.floor(body.quantity ?? 1))
     const { data: existingItem } = await supabase
       .from("cart_items")

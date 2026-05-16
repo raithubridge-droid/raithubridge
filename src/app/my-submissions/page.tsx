@@ -5,19 +5,12 @@ import { redirect } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { SubmissionStatus } from "@/lib/marketplace-data"
+import { REVIEW_STATUS_TONE_CLASS } from "@/lib/domain"
 import { getCurrentUserSubmissions } from "@/lib/product-submissions"
 
 export const metadata: Metadata = {
   title: "My Submissions",
   description: "Track product review status and admin comments.",
-}
-
-const statusTone: Record<SubmissionStatus, string> = {
-  "Pending Review": "bg-amber-100 text-amber-900 border-amber-200",
-  "On Hold": "bg-blue-100 text-blue-900 border-blue-200",
-  Approved: "bg-emerald-100 text-emerald-900 border-emerald-200",
-  Rejected: "bg-red-100 text-red-900 border-red-200",
 }
 
 export default async function MySubmissionsPage() {
@@ -55,7 +48,7 @@ export default async function MySubmissionsPage() {
                       Submitted {item.submittedAt}
                     </p>
                   </div>
-                  <Badge className={`border px-3 py-1 text-sm ${statusTone[item.status]}`}>
+                  <Badge className={`border px-3 py-1 text-sm ${REVIEW_STATUS_TONE_CLASS[item.status]}`}>
                     {item.status}
                   </Badge>
                 </div>

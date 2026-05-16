@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
-import type { SubmissionStatus } from "@/lib/marketplace-data"
+import {
+  PRODUCT_REVIEW_STATUSES,
+  type ProductReviewStatus,
+} from "@/lib/domain"
 
 type AdminSubmissionRouteContext = {
   params: Promise<{
@@ -9,18 +12,13 @@ type AdminSubmissionRouteContext = {
   }>
 }
 
-const allowedStatuses = new Set<SubmissionStatus>([
-  "Pending Review",
-  "On Hold",
-  "Approved",
-  "Rejected",
-])
+const allowedStatuses = new Set<ProductReviewStatus>(PRODUCT_REVIEW_STATUSES)
 
 export async function PATCH(request: NextRequest, { params }: AdminSubmissionRouteContext) {
   const { productId } = await params
   const body = (await request.json().catch(() => ({}))) as {
     adminComment?: string
-    status?: SubmissionStatus
+    status?: ProductReviewStatus
   }
 
   if (!body.status || !allowedStatuses.has(body.status)) {
@@ -51,10 +49,12 @@ export async function PATCH(request: NextRequest, { params }: AdminSubmissionRou
       .from("products")
       .update({
         admin_comment: body.adminComment ?? "",
+        review_status: body.status,
+        availability_status: body.status === "Approved" ? "Active" : "Inactive",
         status: body.status,
       })
       .eq("id", productId)
-      .select("id, status, admin_comment")
+      .select("id, status, review_status, availability_status, admin_comment")
       .single()
 
     if (error || !data) {

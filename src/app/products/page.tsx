@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { ProductsPageClient } from "@/app/products/products-page-client"
 import { APPROVED_PRODUCTS } from "@/lib/marketplace-data"
+import { shouldUseSampleData } from "@/lib/supabase/env"
 
 export const metadata: Metadata = {
   title: "Products",
@@ -9,5 +10,7 @@ export const metadata: Metadata = {
 }
 
 export default function ProductsPage() {
-  return <ProductsPageClient initialProducts={APPROVED_PRODUCTS} />
+  return (
+    <ProductsPageClient initialProducts={shouldUseSampleData() ? APPROVED_PRODUCTS : []} />
+  )
 }
