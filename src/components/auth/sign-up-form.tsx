@@ -2,21 +2,84 @@
 
 import * as React from "react"
 import { LogIn } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { createClient } from "@/lib/supabase/client"
+import { hasSupabaseEnv, SUPABASE_ENV_MESSAGE } from "@/lib/supabase/env"
 
 export function SignUpForm() {
   const [message, setMessage] = React.useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const router = useRouter()
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setMessage("Static preview only. Account creation will be connected later.")
+
+    if (!hasSupabaseEnv()) {
+      setMessage(SUPABASE_ENV_MESSAGE)
+      return
+    }
+
+    const formData = new FormData(e.currentTarget)
+    const fullName = String(formData.get("name") ?? "").trim()
+    const email = String(formData.get("email") ?? "").trim()
+    const password = String(formData.get("password") ?? "")
+
+    if (password.length < 8) {
+      setMessage("Use a password with at least 8 characters.")
+      return
+    }
+
+    setIsSubmitting(true)
+    setMessage(null)
+
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/products`,
+        },
+      })
+
+      if (error) {
+        throw error
+      }
+
+      if (data.user) {
+        await supabase
+          .from("profiles")
+          .upsert({
+            email,
+            full_name: fullName,
+            id: data.user.id,
+            role: "user",
+          })
+      }
+
+      if (!data.session) {
+        setMessage("Account created. Check your email to confirm your account, then sign in.")
+        return
+      }
+
+      router.push("/products")
+      router.refresh()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to create account.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handleGoogleSignUp() {
-    setMessage("Google signup UI is static for now and will be connected later.")
+    setMessage("Google login coming soon.")
   }
 
   return (
@@ -68,8 +131,12 @@ export function SignUpForm() {
           {message}
         </p>
       ) : null}
-      <Button type="submit" className="h-12 w-full rounded-xl text-base font-semibold">
-        Create Account
+      <Button
+        type="submit"
+        className="h-12 w-full rounded-xl text-base font-semibold"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Creating account..." : "Create Account"}
       </Button>
     </form>
   )

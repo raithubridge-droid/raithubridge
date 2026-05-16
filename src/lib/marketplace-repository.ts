@@ -16,9 +16,13 @@ type MediaRow = Database["public"]["Tables"]["product_media"]["Row"]
 
 const productStatusLabel: Record<ProductRow["status"], ApprovedProduct["status"]> = {
   archived: "Limited",
+  approved: "Available",
   available: "Available",
   draft: "Limited",
   limited: "Limited",
+  on_hold: "Limited",
+  pending: "Limited",
+  rejected: "Limited",
   seasonal: "Seasonal",
 }
 

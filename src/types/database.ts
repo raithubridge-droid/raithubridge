@@ -6,8 +6,17 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-type UserRole = "buyer" | "seller" | "admin"
-type ProductStatus = "available" | "limited" | "seasonal" | "draft" | "archived"
+type UserRole = "user" | "admin"
+type ProductStatus =
+  | "pending"
+  | "on_hold"
+  | "approved"
+  | "rejected"
+  | "available"
+  | "limited"
+  | "seasonal"
+  | "draft"
+  | "archived"
 type AvailabilityStatus = "in_stock" | "out_of_stock"
 type CartStatus = "active" | "converted" | "abandoned"
 type OrderStatus = "pending" | "confirmed" | "cancelled" | "paid"
@@ -16,13 +25,13 @@ type PaymentStatus = "pending" | "authorized" | "paid" | "failed" | "refunded"
 export type Database = {
   public: {
     Tables: {
-      users: {
+      profiles: {
         Row: {
           id: string
           email: string | null
           full_name: string | null
-          role: UserRole
           phone: string | null
+          role: UserRole
           whatsapp: string | null
           created_at: string
           updated_at: string
@@ -31,8 +40,8 @@ export type Database = {
           id: string
           email?: string | null
           full_name?: string | null
-          role?: UserRole
           phone?: string | null
+          role?: UserRole
           whatsapp?: string | null
           created_at?: string
           updated_at?: string
@@ -41,8 +50,8 @@ export type Database = {
           id?: string
           email?: string | null
           full_name?: string | null
-          role?: UserRole
           phone?: string | null
+          role?: UserRole
           whatsapp?: string | null
           created_at?: string
           updated_at?: string
@@ -95,6 +104,7 @@ export type Database = {
           seller_info: string | null
           status: ProductStatus
           is_active: boolean
+          admin_comment: string | null
           created_at: string
           updated_at: string
         }
@@ -116,6 +126,7 @@ export type Database = {
           seller_info?: string | null
           status?: ProductStatus
           is_active?: boolean
+          admin_comment?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -137,6 +148,7 @@ export type Database = {
           seller_info?: string | null
           status?: ProductStatus
           is_active?: boolean
+          admin_comment?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -344,19 +356,7 @@ export type Database = {
         Relationships: []
       }
     }
-    Views: {
-      profiles: {
-        Row: {
-          id: string
-          email: string | null
-          full_name: string | null
-          role: UserRole
-          created_at: string
-          updated_at: string
-        }
-        Relationships: []
-      }
-    }
+    Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

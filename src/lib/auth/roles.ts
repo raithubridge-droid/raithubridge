@@ -1,20 +1,19 @@
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+import { hasSupabaseEnv } from "@/lib/supabase/env"
 import type { Database } from "@/types/database"
 
-export type UserRole = Database["public"]["Tables"]["users"]["Row"]["role"]
+export type UserRole = Database["public"]["Tables"]["profiles"]["Row"]["role"]
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Admin",
-  buyer: "Buyer",
-  seller: "Seller",
+  user: "User",
 }
 
 export const ROLE_HOME: Record<UserRole, string> = {
   admin: "/admin",
-  buyer: "/products",
-  seller: "/submit-product",
+  user: "/products",
 }
 
 export type AuthProfile = {
@@ -25,6 +24,10 @@ export type AuthProfile = {
 }
 
 export async function getCurrentProfile() {
+  if (!hasSupabaseEnv()) {
+    return { user: null, profile: null }
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -35,7 +38,7 @@ export async function getCurrentProfile() {
   }
 
   const { data: profile } = await supabase
-    .from("users")
+    .from("profiles")
     .select("id, email, full_name, role")
     .eq("id", user.id)
     .maybeSingle()
@@ -48,12 +51,12 @@ export async function getCurrentProfile() {
     id: user.id,
     email: user.email ?? null,
     full_name: user.user_metadata.full_name ?? user.user_metadata.name ?? null,
-    role: "buyer" as const,
+    role: "user" as const,
     updated_at: new Date().toISOString(),
   }
 
   const { data: createdProfile } = await supabase
-    .from("users")
+    .from("profiles")
     .upsert(fallbackProfile)
     .select("id, email, full_name, role")
     .single()

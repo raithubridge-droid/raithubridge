@@ -4,25 +4,63 @@
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------------------
--- Users
+-- Profiles linked to Supabase Auth
 -- ---------------------------------------------------------------------------
-create table if not exists public.users (
+create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text,
   full_name text,
-  role text not null default 'buyer' check (role in ('buyer', 'seller', 'admin')),
   phone text,
+  role text not null default 'user' check (role in ('user', 'admin')),
   whatsapp text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index if not exists users_role_idx on public.users (role);
+create index if not exists profiles_role_idx on public.profiles (role);
 
--- Compatibility view for older auth helper code.
-create or replace view public.profiles as
-select id, email, full_name, role, created_at, updated_at
-from public.users;
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_profiles_updated_at on public.profiles;
+create trigger set_profiles_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name')
+  )
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_auth_user();
 
 -- ---------------------------------------------------------------------------
 -- Categories
@@ -37,11 +75,11 @@ create table if not exists public.categories (
 );
 
 -- ---------------------------------------------------------------------------
--- Products
+-- Products and product media
 -- ---------------------------------------------------------------------------
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
-  seller_id uuid references public.users (id) on delete set null,
+  seller_id uuid references public.profiles (id) on delete set null,
   category_id uuid references public.categories (id) on delete set null,
   name text not null,
   slug text not null unique,
@@ -55,8 +93,11 @@ create table if not exists public.products (
   seller_location text not null,
   delivery_info text,
   seller_info text,
-  status text not null default 'available' check (status in ('available', 'limited', 'seasonal', 'draft', 'archived')),
+  status text not null default 'pending' check (
+    status in ('pending', 'on_hold', 'approved', 'rejected', 'available', 'limited', 'seasonal', 'draft', 'archived')
+  ),
   is_active boolean not null default true,
+  admin_comment text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -65,9 +106,11 @@ create index if not exists products_category_idx on public.products (category_id
 create index if not exists products_seller_idx on public.products (seller_id);
 create index if not exists products_active_status_idx on public.products (is_active, status);
 
--- ---------------------------------------------------------------------------
--- Product media
--- ---------------------------------------------------------------------------
+drop trigger if exists set_products_updated_at on public.products;
+create trigger set_products_updated_at
+before update on public.products
+for each row execute function public.set_updated_at();
+
 create table if not exists public.product_media (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references public.products (id) on delete cascade,
@@ -95,12 +138,17 @@ create table if not exists public.inventory (
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists set_inventory_updated_at on public.inventory;
+create trigger set_inventory_updated_at
+before update on public.inventory
+for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- Carts and cart items
 -- ---------------------------------------------------------------------------
 create table if not exists public.carts (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references public.users (id) on delete cascade,
+  user_id uuid references public.profiles (id) on delete cascade,
   guest_id text,
   status text not null default 'active' check (status in ('active', 'converted', 'abandoned')),
   created_at timestamptz not null default now(),
@@ -116,6 +164,11 @@ create unique index if not exists carts_active_guest_idx
 on public.carts (guest_id)
 where status = 'active' and guest_id is not null;
 
+drop trigger if exists set_carts_updated_at on public.carts;
+create trigger set_carts_updated_at
+before update on public.carts
+for each row execute function public.set_updated_at();
+
 create table if not exists public.cart_items (
   id uuid primary key default gen_random_uuid(),
   cart_id uuid not null references public.carts (id) on delete cascade,
@@ -128,12 +181,17 @@ create table if not exists public.cart_items (
 
 create index if not exists cart_items_cart_idx on public.cart_items (cart_id);
 
+drop trigger if exists set_cart_items_updated_at on public.cart_items;
+create trigger set_cart_items_updated_at
+before update on public.cart_items
+for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- Orders and payments
 -- ---------------------------------------------------------------------------
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references public.users (id) on delete set null,
+  user_id uuid references public.profiles (id) on delete set null,
   cart_id uuid references public.carts (id) on delete set null,
   status text not null default 'pending' check (status in ('pending', 'confirmed', 'cancelled', 'paid')),
   items jsonb not null default '[]'::jsonb,
@@ -147,6 +205,11 @@ create table if not exists public.orders (
 );
 
 create index if not exists orders_user_idx on public.orders (user_id);
+
+drop trigger if exists set_orders_updated_at on public.orders;
+create trigger set_orders_updated_at
+before update on public.orders
+for each row execute function public.set_updated_at();
 
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
@@ -162,6 +225,11 @@ create table if not exists public.payments (
 
 create index if not exists payments_order_idx on public.payments (order_id);
 
+drop trigger if exists set_payments_updated_at on public.payments;
+create trigger set_payments_updated_at
+before update on public.payments
+for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- Role helper
 -- ---------------------------------------------------------------------------
@@ -172,7 +240,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select role from public.users where id = auth.uid()
+  select role from public.profiles where id = auth.uid()
 $$;
 
 grant execute on function public.current_user_role() to authenticated;
@@ -180,7 +248,7 @@ grant execute on function public.current_user_role() to authenticated;
 -- ---------------------------------------------------------------------------
 -- RLS
 -- ---------------------------------------------------------------------------
-alter table public.users enable row level security;
+alter table public.profiles enable row level security;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.product_media enable row level security;
@@ -190,22 +258,22 @@ alter table public.cart_items enable row level security;
 alter table public.orders enable row level security;
 alter table public.payments enable row level security;
 
-drop policy if exists "users_select_own_or_admin" on public.users;
-drop policy if exists "users_insert_own" on public.users;
-drop policy if exists "users_update_own_or_admin" on public.users;
+drop policy if exists "profiles_select_own_or_admin" on public.profiles;
+drop policy if exists "profiles_insert_own" on public.profiles;
+drop policy if exists "profiles_update_own_or_admin" on public.profiles;
 
-create policy "users_select_own_or_admin"
-on public.users for select to authenticated
+create policy "profiles_select_own_or_admin"
+on public.profiles for select to authenticated
 using (id = auth.uid() or public.current_user_role() = 'admin');
 
-create policy "users_insert_own"
-on public.users for insert to authenticated
-with check (id = auth.uid() and role in ('buyer', 'seller'));
+create policy "profiles_insert_own"
+on public.profiles for insert to authenticated
+with check (id = auth.uid() and role = 'user');
 
-create policy "users_update_own_or_admin"
-on public.users for update to authenticated
+create policy "profiles_update_own_or_admin"
+on public.profiles for update to authenticated
 using (id = auth.uid() or public.current_user_role() = 'admin')
-with check ((id = auth.uid() and role in ('buyer', 'seller')) or public.current_user_role() = 'admin');
+with check ((id = auth.uid() and role = 'user') or public.current_user_role() = 'admin');
 
 drop policy if exists "categories_public_read" on public.categories;
 drop policy if exists "categories_admin_write" on public.categories;
@@ -219,51 +287,84 @@ on public.categories for all to authenticated
 using (public.current_user_role() = 'admin')
 with check (public.current_user_role() = 'admin');
 
-drop policy if exists "products_public_read_active" on public.products;
-drop policy if exists "products_seller_or_admin_write" on public.products;
+drop policy if exists "products_public_read_approved" on public.products;
+drop policy if exists "products_submitter_insert" on public.products;
+drop policy if exists "products_submitter_read_own" on public.products;
+drop policy if exists "products_submitter_update_own_pending" on public.products;
+drop policy if exists "products_admin_all" on public.products;
 
-create policy "products_public_read_active"
+create policy "products_public_read_approved"
 on public.products for select to anon, authenticated
-using (is_active = true and status <> 'draft');
+using (
+  is_active = true
+  and status in ('approved', 'available', 'limited', 'seasonal')
+);
 
-create policy "products_seller_or_admin_write"
+create policy "products_submitter_read_own"
+on public.products for select to authenticated
+using (seller_id = auth.uid());
+
+create policy "products_submitter_insert"
+on public.products for insert to authenticated
+with check (
+  seller_id = auth.uid()
+  and status in ('pending', 'draft')
+);
+
+create policy "products_submitter_update_own_pending"
+on public.products for update to authenticated
+using (seller_id = auth.uid() and status in ('pending', 'draft', 'on_hold'))
+with check (seller_id = auth.uid() and status in ('pending', 'draft'));
+
+create policy "products_admin_all"
 on public.products for all to authenticated
-using (seller_id = auth.uid() or public.current_user_role() = 'admin')
-with check (seller_id = auth.uid() or public.current_user_role() = 'admin');
+using (public.current_user_role() = 'admin')
+with check (public.current_user_role() = 'admin');
 
-drop policy if exists "product_media_public_read_active_product" on public.product_media;
-drop policy if exists "product_media_seller_or_admin_write" on public.product_media;
+drop policy if exists "product_media_public_read_approved_product" on public.product_media;
+drop policy if exists "product_media_submitter_or_admin_write" on public.product_media;
 
-create policy "product_media_public_read_active_product"
+create policy "product_media_public_read_approved_product"
 on public.product_media for select to anon, authenticated
 using (
   exists (
     select 1 from public.products p
-    where p.id = product_id and p.is_active = true and p.status <> 'draft'
+    where p.id = product_id
+      and p.is_active = true
+      and p.status in ('approved', 'available', 'limited', 'seasonal')
   )
 );
 
-create policy "product_media_seller_or_admin_write"
+create policy "product_media_submitter_or_admin_write"
 on public.product_media for all to authenticated
 using (
   exists (
     select 1 from public.products p
-    where p.id = product_id and (p.seller_id = auth.uid() or public.current_user_role() = 'admin')
+    where p.id = product_id
+      and (p.seller_id = auth.uid() or public.current_user_role() = 'admin')
   )
 )
 with check (
   exists (
     select 1 from public.products p
-    where p.id = product_id and (p.seller_id = auth.uid() or public.current_user_role() = 'admin')
+    where p.id = product_id
+      and (p.seller_id = auth.uid() or public.current_user_role() = 'admin')
   )
 );
 
-drop policy if exists "inventory_public_read" on public.inventory;
+drop policy if exists "inventory_public_read_available" on public.inventory;
 drop policy if exists "inventory_admin_write" on public.inventory;
 
-create policy "inventory_public_read"
+create policy "inventory_public_read_available"
 on public.inventory for select to anon, authenticated
-using (true);
+using (
+  exists (
+    select 1 from public.products p
+    where p.id = product_id
+      and p.is_active = true
+      and p.status in ('approved', 'available', 'limited', 'seasonal')
+  )
+);
 
 create policy "inventory_admin_write"
 on public.inventory for all to authenticated
