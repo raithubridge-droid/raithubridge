@@ -1,15 +1,20 @@
 import { redirect } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { hasSupabaseEnv } from "@/lib/supabase/env"
 import { createClient } from "@/lib/supabase/server"
 
 export function SignOutButton() {
   async function signOut() {
     "use server"
 
+    if (!hasSupabaseEnv()) {
+      redirect("/signin")
+    }
+
     const supabase = await createClient()
     await supabase.auth.signOut()
-    redirect("/")
+    redirect("/signin")
   }
 
   return (

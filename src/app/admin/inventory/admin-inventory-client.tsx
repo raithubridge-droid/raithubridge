@@ -6,7 +6,11 @@ import { LockKeyhole } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { INVENTORY_ITEMS, type SubmissionStatus } from "@/lib/marketplace-data"
+import {
+  INVENTORY_ITEMS,
+  type InventoryItem,
+  type SubmissionStatus,
+} from "@/lib/marketplace-data"
 
 const ADMIN_ACCESS_KEY = "raithubridge-admin-preview"
 
@@ -18,11 +22,50 @@ const statusTone: Record<SubmissionStatus, string> = {
 }
 
 export function AdminInventoryClient() {
-  const [hasAccess, setHasAccess] = React.useState(
-    () => typeof window !== "undefined" && window.localStorage.getItem(ADMIN_ACCESS_KEY) === "granted"
-  )
+  const [hasAccess, setHasAccess] = React.useState(false)
   const [accessCode, setAccessCode] = React.useState("")
-  const [items, setItems] = React.useState(INVENTORY_ITEMS)
+  const [items, setItems] = React.useState<InventoryItem[]>(INVENTORY_ITEMS)
+
+  React.useEffect(() => {
+    let isMounted = true
+
+    queueMicrotask(() => {
+      if (isMounted) {
+        setHasAccess(window.localStorage.getItem(ADMIN_ACCESS_KEY) === "granted")
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!hasAccess) {
+      return
+    }
+
+    let isMounted = true
+
+    async function loadInventory() {
+      try {
+        const response = await fetch("/api/admin/inventory")
+        const payload = (await response.json()) as { items?: InventoryItem[] }
+
+        if (isMounted && payload.items?.length) {
+          setItems(payload.items)
+        }
+      } catch {
+        // Keep sample inventory when the API is not available.
+      }
+    }
+
+    void loadInventory()
+
+    return () => {
+      isMounted = false
+    }
+  }, [hasAccess])
 
   function unlockAdminPreview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -34,6 +77,21 @@ export function AdminInventoryClient() {
   }
 
   function toggleAvailability(id: string) {
+    const nextItem = items.find((item) => item.id === id)
+
+    if (nextItem) {
+      const inStock = !nextItem.inStock
+      const stockCount = inStock ? Math.max(1, nextItem.stockCount) : 0
+
+      void fetch(`/api/admin/inventory/${id}`, {
+        body: JSON.stringify({ inStock, stockCount }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "PATCH",
+      }).catch(() => undefined)
+    }
+
     setItems((current) =>
       current.map((item) =>
         item.id === id
@@ -56,8 +114,8 @@ export function AdminInventoryClient() {
           </div>
           <h1 className="mt-5 text-3xl font-bold tracking-tight">Admin-only inventory</h1>
           <p className="mt-3 text-base text-muted-foreground">
-            Inventory management is restricted to admin accounts. This static preview uses an
-            admin code until real account permissions are connected.
+            Inventory management is restricted to admin accounts. This preview uses an
+            admin code while the API enforces database access policies.
           </p>
           <form onSubmit={unlockAdminPreview} className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Input
@@ -85,7 +143,8 @@ export function AdminInventoryClient() {
               Inventory
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Admin-only static inventory view with stock counts and availability toggles.
+              Admin-only inventory view with stock counts and availability toggles backed by
+              the inventory table when Supabase is configured.
             </p>
           </div>
           <Badge className="w-fit rounded-full px-4 py-2 text-sm">Admin access</Badge>
