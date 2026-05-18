@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sprout,
-  Wheat,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +28,7 @@ import { shouldUseSampleData } from "@/lib/supabase/env"
 
 const HOME_IMAGE_FALLBACK =
   "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1200&q=80"
+const HERO_FARM_IMAGE = "/home-hero-produce.png"
 
 const productSteps = [
   {
@@ -146,7 +146,7 @@ function PopularProductCard({ product }: { product: HomePopularProduct }) {
     <Card className="group h-full overflow-hidden border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 transition-[box-shadow,transform] duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-primary/10">
       <Link
         href="/products"
-        className="relative block aspect-[5/4] overflow-hidden bg-muted"
+        className="relative block aspect-[16/10] overflow-hidden bg-muted sm:aspect-[5/4]"
       >
         <HomeProductImage
           src={product.imageUrl}
@@ -165,21 +165,21 @@ function PopularProductCard({ product }: { product: HomePopularProduct }) {
           {product.category}
         </Badge>
       </Link>
-      <CardHeader className="space-y-3 pb-2">
-        <CardTitle className="text-xl leading-snug">
+      <CardHeader className="space-y-2 px-4 pb-2 pt-4 sm:px-6">
+        <CardTitle className="text-lg leading-snug sm:text-xl">
           <Link href="/products" className="hover:text-primary">
             {product.name}
           </Link>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 pt-0">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xl font-bold tracking-tight text-foreground">{product.price}</p>
-          <Badge variant="outline" className="border-primary/20 bg-primary/5 text-xs text-primary">
+      <CardContent className="space-y-3 px-4 pb-4 pt-0 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{product.price}</p>
+          <Badge variant="outline" className="border-primary/20 bg-primary/5 text-[0.7rem] text-primary">
             {product.trustBadge}
           </Badge>
         </div>
-        <div className="space-y-2 text-sm text-muted-foreground">
+        <div className="space-y-1.5 text-sm text-muted-foreground">
           <p className="flex items-center gap-2">
             <ShoppingBag className="size-4 text-primary" aria-hidden />
             {product.sellerName}
@@ -199,7 +199,7 @@ export default function Home() {
 
   return (
     <main>
-      <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-amber-100/50 via-accent/35 to-background px-4 pb-14 pt-12 sm:pb-20 sm:pt-16 dark:from-amber-950/20 dark:via-primary/10 dark:to-background">
+      <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-amber-100/50 via-accent/35 to-background px-4 pb-8 pt-8 sm:pb-16 sm:pt-14 dark:from-amber-950/20 dark:via-primary/10 dark:to-background">
         <div
           className="pointer-events-none absolute -left-28 top-6 size-[28rem] rounded-full bg-primary/15 blur-3xl"
           aria-hidden
@@ -212,29 +212,29 @@ export default function Home() {
           className="pointer-events-none absolute left-1/2 top-1/2 size-[min(100vw,42rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/25 blur-3xl"
           aria-hidden
         />
-        <div className="animate-in fade-in slide-in-from-bottom-4 relative mx-auto grid w-full max-w-6xl items-center gap-10 duration-700 lg:grid-cols-[minmax(0,1.08fr)_minmax(20rem,0.92fr)]">
+        <div className="animate-in fade-in slide-in-from-bottom-4 relative mx-auto grid w-full max-w-6xl items-center gap-6 duration-700 sm:gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(20rem,0.92fr)]">
           <div className="text-center lg:text-left">
           <Badge
             variant="secondary"
-            className="mb-6 border border-primary/10 bg-card/90 px-4 py-1.5 text-sm font-medium shadow-sm"
+            className="mb-4 border border-primary/10 bg-card/90 px-3 py-1.5 text-xs font-medium shadow-sm sm:mb-6 sm:px-4 sm:text-sm"
           >
             Trusted farm product listings · India
           </Badge>
-          <h1 className="font-heading mx-auto max-w-4xl text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl md:leading-[1.08] lg:mx-0 lg:text-[3.25rem]">
+          <h1 className="font-heading mx-auto max-w-4xl text-balance text-[2rem] font-semibold leading-[1.08] tracking-tight text-foreground sm:text-4xl md:text-5xl md:leading-[1.08] lg:mx-0 lg:text-[3.25rem]">
             Helping farmers and sellers reach more buyers and earn better value for their products.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg sm:leading-9 lg:mx-0">
+          <p lang="te" className="mx-auto mt-4 max-w-2xl text-pretty text-[0.98rem] leading-7 text-muted-foreground sm:mt-5 sm:text-lg sm:leading-9 lg:mx-0">
             రైతులు మరియు చిన్న వ్యాపారులు తమ ఉత్పత్తులకు మంచి ధర మరియు ఎక్కువ కొనుగోలుదారులను పొందేందుకు సహాయం చేసే వేదిక.
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground sm:text-xl lg:mx-0">
+          <p className="mx-auto mt-3 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:mt-4 sm:text-xl lg:mx-0">
             RaithuBridge helps farmers and sellers list their products, and helps buyers
             find trusted farm products in one simple place.
           </p>
-          <div className="mt-8 flex w-full max-w-lg flex-col gap-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-5 lg:justify-start">
+          <div className="mx-auto mt-6 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-5 lg:mx-0 lg:justify-start">
             <Button
               asChild
               size="lg"
-              className="h-12 min-h-12 rounded-xl px-10 text-base font-semibold shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 sm:h-14 sm:min-h-14 sm:px-12 sm:text-lg"
+              className="h-12 min-h-12 w-full rounded-xl px-6 text-base font-semibold shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 sm:h-14 sm:min-h-14 sm:w-auto sm:px-12 sm:text-lg"
             >
               <Link href="/submit-product">Submit Product</Link>
             </Button>
@@ -242,7 +242,7 @@ export default function Home() {
               asChild
               variant="outline"
               size="lg"
-              className="h-12 min-h-12 rounded-xl border-2 border-primary/30 bg-card/90 px-10 text-base font-semibold backdrop-blur-sm transition-transform hover:-translate-y-0.5 hover:bg-accent sm:h-14 sm:min-h-14 sm:px-12 sm:text-lg"
+              className="h-12 min-h-12 w-full rounded-xl border-2 border-primary/30 bg-card/90 px-6 text-base font-semibold backdrop-blur-sm transition-transform hover:-translate-y-0.5 hover:bg-accent sm:h-14 sm:min-h-14 sm:w-auto sm:px-12 sm:text-lg"
             >
               <Link href="/products">Browse Products</Link>
             </Button>
@@ -250,7 +250,7 @@ export default function Home() {
           <Button
             asChild
             variant="ghost"
-            className="group mt-6 text-base font-medium text-primary hover:bg-primary/5 hover:text-primary"
+            className="group mt-4 text-sm font-medium text-primary hover:bg-primary/5 hover:text-primary sm:mt-6 sm:text-base"
           >
             <Link href="/products" className="inline-flex items-center gap-2">
               View product catalog
@@ -258,64 +258,65 @@ export default function Home() {
             </Link>
           </Button>
           </div>
-          <div className="rounded-3xl border border-primary/15 bg-card/85 p-5 shadow-xl ring-1 ring-primary/5 backdrop-blur sm:p-6">
-            <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-amber-100/60 to-card p-5 dark:from-primary/20 dark:via-amber-950/30">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-card text-primary shadow-sm">
-                <Wheat className="size-7" aria-hidden />
+          <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-card/80 p-1.5 shadow-xl shadow-primary/10 ring-1 ring-primary/10 sm:rounded-3xl sm:p-2">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-muted sm:aspect-[16/11] sm:rounded-2xl lg:aspect-[5/4]">
+              <HomeProductImage
+                src={HERO_FARM_IMAGE}
+                fallbackSrc={HOME_IMAGE_FALLBACK}
+                alt="Fresh vegetables and farm produce in baskets"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/60 via-emerald-900/10 to-amber-200/10" />
+              <div className="absolute left-3 top-3 rounded-full border border-white/25 bg-white/90 px-3 py-1 text-xs font-semibold text-emerald-900 shadow-lg backdrop-blur sm:left-4 sm:top-4 sm:px-4 sm:py-1.5 sm:text-sm">
+                Farmer-first marketplace
               </div>
-              <h2 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
-                A bridge between farms, sellers, and buyers
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Built to make farm product discovery easier, RaithuBridge gives sellers a
-                simple way to share what they have and gives buyers a clearer way to find it.
-              </p>
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {["Submit", "Review", "Discover"].map((item) => (
-                <div key={item} className="rounded-xl border border-border/60 bg-background/80 px-4 py-3 text-center text-sm font-semibold text-foreground">
-                  {item}
-                </div>
-              ))}
+              <div className="absolute inset-x-3 bottom-3 rounded-xl border border-white/20 bg-white/88 px-3 py-2 shadow-lg backdrop-blur sm:inset-x-4 sm:bottom-4 sm:rounded-2xl sm:p-4">
+                <p className="text-sm font-semibold text-emerald-950">
+                  Helping farmers reach genuine buyers
+                </p>
+                <p className="hidden text-xs leading-relaxed text-emerald-900/75 sm:mt-1 sm:block">
+                  Real farm produce, clearer listings, and direct buyer interest.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-border/60 bg-gradient-to-b from-card/80 via-card/30 to-background px-4 py-14 sm:py-18">
+      <section className="border-b border-border/60 bg-gradient-to-b from-card/80 via-card/30 to-background px-4 py-10 sm:py-16">
         <div className="mx-auto w-full max-w-6xl">
-          <div className="animate-in fade-in slide-in-from-bottom-3 grid gap-8 duration-700 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div className="rounded-3xl border border-primary/15 bg-card/90 p-6 shadow-lg ring-1 ring-primary/5 sm:p-8">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+          <div className="animate-in fade-in slide-in-from-bottom-3 grid gap-5 duration-700 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-8">
+            <div className="rounded-2xl border border-primary/15 bg-card/90 p-5 shadow-lg ring-1 ring-primary/5 sm:rounded-3xl sm:p-8">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary sm:px-4 sm:text-sm">
                 <HeartHandshake className="size-4" aria-hidden />
                 Farmer-first mission
               </div>
-              <h2 className="font-heading mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h2 className="font-heading mt-4 text-2xl font-semibold tracking-tight sm:mt-5 sm:text-4xl">
                 Why We Built RaithuBridge
               </h2>
-              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground sm:mt-4 sm:text-lg">
                 Many farmers work for months to grow their products, but still struggle
                 to get fair visibility and better prices. RaithuBridge was created to help
                 farmers and small sellers showcase their products directly to genuine buyers
                 in a simpler and more transparent way.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <Card className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 transition-transform hover:-translate-y-1">
-                <CardHeader>
-                  <Sprout className="size-9 text-primary" aria-hidden />
-                  <CardTitle>Better visibility</CardTitle>
+                <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+                  <Sprout className="size-7 text-primary sm:size-9" aria-hidden />
+                  <CardTitle className="text-lg sm:text-xl">Better visibility</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-base leading-relaxed text-muted-foreground">
+                <CardContent className="p-4 pt-0 text-sm leading-relaxed text-muted-foreground sm:p-6 sm:pt-0 sm:text-base">
                   Sellers can present their products with clear details and photos.
                 </CardContent>
               </Card>
               <Card className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5 transition-transform hover:-translate-y-1">
-                <CardHeader>
-                  <ShoppingBag className="size-9 text-primary" aria-hidden />
-                  <CardTitle>Genuine buyers</CardTitle>
+                <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+                  <ShoppingBag className="size-7 text-primary sm:size-9" aria-hidden />
+                  <CardTitle className="text-lg sm:text-xl">Genuine buyers</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-base leading-relaxed text-muted-foreground">
+                <CardContent className="p-4 pt-0 text-sm leading-relaxed text-muted-foreground sm:p-6 sm:pt-0 sm:text-base">
                   Buyers can discover trusted listings and connect more directly.
                 </CardContent>
               </Card>
@@ -325,22 +326,22 @@ export default function Home() {
       </section>
 
       {popular.length ? (
-      <section className="border-b border-border/60 bg-gradient-to-b from-background via-amber-50/20 to-background px-4 py-14 dark:via-primary/5 sm:py-18">
+      <section className="border-b border-border/60 bg-gradient-to-b from-background via-amber-50/20 to-background px-4 py-10 dark:via-primary/5 sm:py-16">
         <div className="mx-auto w-full max-w-6xl">
-          <div className="animate-in fade-in slide-in-from-bottom-3 flex flex-col gap-4 duration-700 sm:flex-row sm:items-end sm:justify-between">
+          <div className="animate-in fade-in slide-in-from-bottom-3 flex flex-col gap-3 duration-700 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-4xl">
                 Popular products
               </h2>
-              <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
+              <p className="mt-2 max-w-2xl text-base text-muted-foreground sm:mt-3 sm:text-lg">
                 A quick look at products buyers commonly search for.
               </p>
             </div>
-            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl px-5 text-base font-semibold">
+            <Button asChild variant="outline" className="h-11 w-full shrink-0 rounded-xl px-5 text-base font-semibold sm:w-auto">
               <Link href="/products">View all products</Link>
             </Button>
           </div>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
             {popular.map((product) => (
               <PopularProductCard key={product.id} product={product} />
             ))}
@@ -349,21 +350,21 @@ export default function Home() {
       </section>
       ) : null}
 
-      <section className="border-b border-border/60 bg-gradient-to-br from-muted/50 via-background to-accent/25 px-4 py-10 sm:py-12">
+      <section className="border-b border-border/60 bg-gradient-to-br from-muted/50 via-background to-accent/25 px-4 py-8 sm:py-12">
         <div className="mx-auto w-full max-w-6xl">
           <div className="animate-in fade-in slide-in-from-bottom-3 mx-auto max-w-2xl text-center duration-700">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-3xl">
               How RaithuBridge Works
             </h2>
-            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:mt-2 sm:text-base">
               Helping farmers and small sellers reach genuine buyers with fewer middlemen.
             </p>
           </div>
-          <div className="mt-6 grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
+          <div className="mt-5 grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
             {productSteps.map(({ title, description, icon: Icon }, index) => (
               <div key={title} className="contents">
                 <Card className="border-border/70 bg-card/95 shadow-sm ring-1 ring-primary/5 transition-transform hover:-translate-y-0.5">
-                  <CardContent className="flex gap-3 p-4">
+                  <CardContent className="flex gap-3 p-3.5 sm:p-4">
                     <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="size-4" aria-hidden />
                     </div>
@@ -393,33 +394,33 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-14 sm:py-18">
+      <section className="px-4 py-10 sm:py-16">
         <div className="mx-auto w-full max-w-6xl">
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-center lg:gap-12">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary sm:px-4 sm:text-sm">
                 <Leaf className="size-4" aria-hidden />
                 Why buy direct
               </div>
-              <h2 className="font-heading mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h2 className="font-heading mt-4 text-2xl font-semibold tracking-tight sm:mt-5 sm:text-4xl">
                 Why buy directly from farmers and sellers
               </h2>
-              <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
+              <p className="mt-3 text-base text-muted-foreground sm:mt-4 sm:text-xl">
                 Direct discovery helps buyers understand what is available, where it comes
                 from, and who is selling it.
               </p>
             </div>
-            <ul className="grid gap-4 sm:grid-cols-2">
+            <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {whyDirect.map(({ title, body, icon: Icon }) => (
                 <li
                   key={title}
-                  className="rounded-2xl border border-border/70 bg-card/90 p-5 shadow-md ring-1 ring-primary/5 sm:p-6"
+                  className="rounded-2xl border border-border/70 bg-card/90 p-4 shadow-md ring-1 ring-primary/5 sm:p-6"
                 >
-                  <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" aria-hidden />
+                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary sm:size-11">
+                    <Icon className="size-4 sm:size-5" aria-hidden />
                   </div>
-                  <p className="mt-4 text-lg font-semibold text-foreground">{title}</p>
-                  <p className="mt-2 text-base leading-relaxed text-muted-foreground">{body}</p>
+                  <p className="mt-3 text-base font-semibold text-foreground sm:mt-4 sm:text-lg">{title}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:mt-2 sm:text-base">{body}</p>
                 </li>
               ))}
             </ul>

@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button"
 import { hasSupabaseEnv } from "@/lib/supabase/env"
 import { createClient } from "@/lib/supabase/server"
 
-export function SignOutButton() {
+type SignOutButtonProps = {
+  buttonClassName?: string
+  formClassName?: string
+}
+
+export function SignOutButton({ buttonClassName, formClassName }: SignOutButtonProps = {}) {
   async function signOut() {
     "use server"
 
@@ -18,8 +23,13 @@ export function SignOutButton() {
   }
 
   return (
-    <form action={signOut}>
-      <Button type="submit" variant="ghost" size="default" className="h-10 px-3 text-base">
+    <form action={signOut} className={formClassName}>
+      <Button
+        type="submit"
+        variant="ghost"
+        size="default"
+        className={buttonClassName ?? "h-10 px-3 text-base"}
+      >
         Sign Out
       </Button>
     </form>

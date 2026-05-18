@@ -3,16 +3,19 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { CheckCircle2, MapPin, PackageCheck, Truck, UserRound, Video } from "lucide-react"
+import { ArrowLeft, CheckCircle2, MapPin, Minus, PackageCheck, Plus, ShoppingCart } from "lucide-react"
 
-import { AddToCartButton } from "@/components/cart/add-to-cart-button"
+import { useCart } from "@/components/cart/cart-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import type { ApprovedProduct } from "@/lib/marketplace-data"
 
 export function ProductDetailClient({ initialProduct }: { initialProduct: ApprovedProduct }) {
   const [product, setProduct] = React.useState(initialProduct)
+  const [selectedImage, setSelectedImage] = React.useState(0)
+  const [quantity, setQuantity] = React.useState(1)
+  const { addItem } = useCart()
 
   React.useEffect(() => {
     let isMounted = true
@@ -38,21 +41,25 @@ export function ProductDetailClient({ initialProduct }: { initialProduct: Approv
   }, [initialProduct.id])
 
   const photos = product.mediaAssets.filter((asset) => asset.type === "image")
-  const videos = product.mediaAssets.filter((asset) => asset.type === "video")
+  const selectedPhoto = photos[selectedImage] ?? photos[0]
 
   return (
-    <main className="px-4 py-14 sm:py-20">
-      <div className="mx-auto w-full max-w-7xl">
-        <Button asChild variant="ghost" className="-ml-2 mb-8 h-11 text-base text-muted-foreground">
-          <Link href="/products">Back to products</Link>
-        </Button>
+    <main className="px-4 pb-5 pt-2 sm:pb-10 sm:pt-4">
+      <div className="mx-auto w-full max-w-6xl">
+        <Link
+          href="/products"
+          className="flex items-center gap-2 px-1 pb-2 pt-2 text-sm font-semibold text-green-900 hover:text-primary sm:px-0"
+        >
+            <ArrowLeft className="size-4" aria-hidden />
+            Back to products
+        </Link>
 
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,0.9fr)]">
-          <section className="space-y-4">
+        <div className="mt-2 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:gap-8">
+          <section className="space-y-2">
             <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-lg ring-1 ring-primary/5">
               <div className="aspect-[4/3] bg-muted">
-                {photos[0] ? (
-                  <img src={photos[0].url} alt={product.name} className="h-full w-full object-cover" />
+                {selectedPhoto ? (
+                  <img src={selectedPhoto.url} alt={selectedPhoto.name} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
                     Product photo
@@ -61,97 +68,98 @@ export function ProductDetailClient({ initialProduct }: { initialProduct: Approv
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              {photos.slice(1).map((asset) => (
-                <div
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3">
+              {photos.slice(0, 4).map((asset, index) => (
+                <button
+                  type="button"
                   key={asset.path}
-                  className="aspect-[4/3] overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm"
+                  className={`aspect-[4/3] overflow-hidden rounded-2xl border bg-card shadow-sm ${
+                    selectedImage === index ? "border-primary ring-2 ring-primary/25" : "border-border/70"
+                  }`}
+                  onClick={() => setSelectedImage(index)}
                 >
                   <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
-                </div>
-              ))}
-              {videos.map((asset) => (
-                <div
-                  key={asset.path}
-                  className="flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-amber-200 bg-amber-50 p-4 text-center"
-                >
-                  <Video className="size-8 text-amber-700" aria-hidden />
-                  <p className="mt-2 text-sm font-semibold text-foreground">{asset.name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Uploaded video preview</p>
-                </div>
+                </button>
               ))}
             </div>
           </section>
 
-          <section className="space-y-6">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="px-3 py-1 text-sm font-semibold">
+          <section className="lg:pt-0">
+            <Card className="border-border/70 bg-card/95 shadow-lg ring-1 ring-primary/5">
+              <CardContent className="space-y-4 p-4 sm:p-5">
+              <div className="mb-1 flex items-center gap-2">
+                <Badge variant="secondary" className="rounded-full border border-primary/10 bg-amber-50/90 px-3 py-1 text-xs font-semibold">
                   {product.category}
                 </Badge>
-                <Badge className="px-3 py-1 text-sm">{product.status}</Badge>
+                <Badge className="rounded-full px-3 py-1 text-xs">
+                  {product.inStock ? "In Stock" : "Out of Stock"}
+                </Badge>
               </div>
-              <h1 className="mt-5 font-heading text-4xl font-bold tracking-tight sm:text-5xl">
+                <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
                 {product.name}
-              </h1>
-              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
-            </div>
+                </h1>
 
-            <Card className="border-border/70 bg-card/95 shadow-lg ring-1 ring-primary/5">
-              <CardContent className="space-y-5 p-6">
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <p className="text-3xl font-bold text-foreground">{product.price}</p>
-                  <p className="text-base text-muted-foreground">{product.unitSize}</p>
-                </div>
-                <div className="grid gap-4 text-base sm:grid-cols-2">
+                <div className="grid gap-2 rounded-2xl bg-muted/55 p-3 text-sm sm:text-base">
+                  <p className="text-xl font-bold text-foreground sm:text-2xl">{product.price}</p>
                   <p className="flex items-center gap-2 text-muted-foreground">
-                    <PackageCheck className="size-5 text-primary" aria-hidden />
+                    <CheckCircle2 className="size-4 text-primary sm:size-5" aria-hidden />
+                    Availability: {product.inStock ? "In Stock" : "Out of Stock"}
+                  </p>
+                  <p className="flex items-start gap-2 text-muted-foreground">
+                    <MapPin className="mt-0.5 size-4 text-primary sm:size-5" aria-hidden />
+                    {product.sellerLocation}
+                  </p>
+                </div>
+
+                <div className="grid gap-3 text-sm sm:grid-cols-2 sm:text-base">
+                  <p className="flex items-center gap-2 text-muted-foreground">
+                    <PackageCheck className="size-4 text-primary sm:size-5" aria-hidden />
                     {product.quantity} {product.unit} available
                   </p>
-                  <p className="flex items-center gap-2 text-muted-foreground">
-                    <CheckCircle2 className="size-5 text-primary" aria-hidden />
-                    {product.inStock ? "In stock" : "Out of stock"}
+                </div>
+
+                <div>
+                  <h2 className="text-base font-bold text-foreground sm:text-lg">Farmer description</h2>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    {product.description}
                   </p>
                 </div>
-                <AddToCartButton
-                  productId={product.id}
-                  className="h-12 w-full rounded-xl text-base font-semibold"
-                />
-              </CardContent>
-            </Card>
 
-            <Card className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
-              <CardHeader>
-                <CardTitle className="text-2xl">Seller information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-base text-muted-foreground">
-                <p className="flex items-center gap-2">
-                  <UserRound className="size-5 text-primary" aria-hidden />
-                  {product.sellerName}
-                </p>
-                <p className="flex items-start gap-2">
-                  <MapPin className="mt-0.5 size-5 text-primary" aria-hidden />
-                  {product.sellerLocation}
-                </p>
-                <p>{product.sellerInfo}</p>
-              </CardContent>
-            </Card>
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background p-3">
+                  <span className="text-sm font-semibold text-foreground">Quantity</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="flex size-8 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted"
+                      onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="size-4" aria-hidden />
+                    </button>
+                    <span className="min-w-7 text-center text-base font-bold text-foreground">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      className="flex size-8 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted"
+                      onClick={() => setQuantity((current) => Math.min(99, current + 1))}
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="size-4" aria-hidden />
+                    </button>
+                    <span className="text-sm font-semibold text-foreground">{product.unit}</span>
+                  </div>
+                </div>
 
-            <Card className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
-              <CardHeader>
-                <CardTitle className="text-2xl">Delivery and purchase notes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-base text-muted-foreground">
-                <p className="flex items-start gap-2">
-                  <Truck className="mt-0.5 size-5 text-primary" aria-hidden />
-                  {product.deliveryInfo}
-                </p>
-                <p>
-                  Add this item to cart to review quantities before checkout. Seller
-                  contact details stay inside the review and order workflow.
-                </p>
+                <Button
+                  type="button"
+                  className="h-12 w-full rounded-2xl text-base font-bold"
+                  onClick={() => addItem(product.id, quantity)}
+                  disabled={!product.inStock}
+                >
+                  <ShoppingCart className="size-5" aria-hidden />
+                  Add to Cart
+                </Button>
               </CardContent>
             </Card>
           </section>
