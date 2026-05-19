@@ -4,8 +4,11 @@ import { cookies } from "next/headers"
 import type { Database } from "@/types/database"
 
 /**
- * Supabase client for Server Components, Server Actions, and Route Handlers.
+ * Supabase client for Server Components and Server Actions.
  * Always create a new client per request — never share across requests.
+ *
+ * For OAuth callbacks, use `createRouteHandlerClient` in
+ * `src/lib/supabase/route-handler.ts` so auth cookies are written on the response.
  *
  * Cookie writes from Server Components are limited; session refresh is handled
  * in `src/middleware.ts` (see `updateSession` in `src/lib/supabase/middleware.ts`).
