@@ -166,19 +166,12 @@ export function CartPageClient({ isSignedIn }: { isSignedIn: boolean }) {
         </div>
 
         {!isSignedIn ? (
-          <section className="rounded-2xl border border-primary/15 bg-primary/5 p-3 shadow-sm">
-            <p className="text-sm font-semibold text-foreground">
-              Sign in to save your cart and track your orders.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button asChild size="sm" className="rounded-xl text-sm font-semibold">
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="rounded-xl text-sm font-semibold">
-                Continue as Guest
-              </Button>
-            </div>
-          </section>
+          <p className="rounded-xl border border-primary/10 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
+            <Link href="/sign-in" className="font-semibold text-primary hover:underline">
+              Sign in
+            </Link>{" "}
+            to save your cart and track your orders.
+          </p>
         ) : null}
 
         {!cartItems.length ? (

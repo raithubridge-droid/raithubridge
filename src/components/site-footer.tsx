@@ -53,6 +53,8 @@ const socialLinks = [
   },
 ] as const
 
+export const dynamic = "force-dynamic"
+
 export async function SiteFooter() {
   const { profile } = await getCurrentProfile()
   const isAdmin = profile?.role === "admin"
