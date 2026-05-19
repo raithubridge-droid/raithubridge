@@ -185,7 +185,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
       : displayProducts.filter((product) => product.category === activeTab)
 
   return (
-    <main className="px-3 py-5 sm:px-4 sm:py-10">
+    <main className="px-3 pb-5 pt-0 sm:px-4 sm:py-10">
       <div className="mx-auto w-full max-w-6xl">
         {errorMessage ? (
           <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:text-base">
@@ -193,7 +193,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
           </p>
         ) : null}
 
-        <div className="sticky top-[7.25rem] z-20 -mx-3 border-y border-border/60 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:pt-0">
+        <div className="sticky top-16 z-20 -mx-3 mb-4 border-y border-border/60 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:mb-0 md:border-0 md:bg-transparent md:px-0 md:pt-0">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {categoryTabs.map((tab) => (
               <button
@@ -231,7 +231,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
           </Card>
         ) : null}
 
-        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 pt-1 sm:grid-cols-3 lg:grid-cols-4">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

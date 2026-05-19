@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   ClipboardList,
   Home,
@@ -71,6 +72,33 @@ export function MobileCartLink({ onClick }: { onClick?: () => void }) {
         {itemCount}
       </span>
     </Link>
+  )
+}
+
+export function MobileHomeQuickLinks() {
+  const pathname = usePathname()
+
+  if (pathname !== "/") {
+    return null
+  }
+
+  return (
+    <nav className="rb-mobile-quick grid-cols-2 gap-2" aria-label="Mobile quick links">
+      <Link
+        href="/products"
+        className="flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-card/90 px-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-primary/10"
+        onClick={closeOpenMobileMenu}
+      >
+        Products
+      </Link>
+      <Link
+        href="/submit-product"
+        className="flex min-h-11 items-center justify-center rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+        onClick={closeOpenMobileMenu}
+      >
+        Submit Product
+      </Link>
+    </nav>
   )
 }
 
