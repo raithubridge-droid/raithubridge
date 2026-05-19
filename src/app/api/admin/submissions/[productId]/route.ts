@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import {
   PRODUCT_REVIEW_STATUSES,
+  toDbReviewStatus,
   type ProductReviewStatus,
 } from "@/lib/domain"
 
@@ -45,13 +46,16 @@ export async function PATCH(request: NextRequest, { params }: AdminSubmissionRou
       return NextResponse.json({ error: "Admin access is required." }, { status: 403 })
     }
 
+    const dbStatus = toDbReviewStatus(body.status)
+
     const { data, error } = await supabase
       .from("products")
       .update({
         admin_comment: body.adminComment ?? "",
-        review_status: body.status,
+        review_status: dbStatus,
         availability_status: body.status === "Approved" ? "Active" : "Inactive",
-        status: body.status,
+        is_active: body.status === "Approved",
+        status: dbStatus,
       })
       .eq("id", productId)
       .select("id, status, review_status, availability_status, admin_comment")

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 
+import { DB_REVIEW_STATUS } from "@/lib/domain"
 import { SUPABASE_ENV_MESSAGE, hasSupabaseEnv } from "@/lib/supabase/env"
 import { createClient } from "@/lib/supabase/server"
 
@@ -35,6 +36,10 @@ function getPhotoFiles(body: FormData) {
 }
 
 function validatePhotoFiles(files: File[]) {
+  if (!files.length) {
+    return null
+  }
+
   if (files.length > MAX_PHOTOS) {
     return `Upload up to ${MAX_PHOTOS} product photos.`
   }
@@ -48,6 +53,61 @@ function validatePhotoFiles(files: File[]) {
   }
 
   return null
+}
+
+type MediaRowInsert = {
+  product_id: string
+  url: string
+  storage_path: string
+  media_type: "image"
+  mime_type: string
+  name: string
+  size_bytes: number
+  sort_order: number
+}
+
+async function uploadProductPhotos(input: {
+  supabase: Awaited<ReturnType<typeof createClient>>
+  userId: string
+  productId: string
+  photos: File[]
+}) {
+  const uploadedPaths: string[] = []
+  const mediaRows: MediaRowInsert[] = []
+
+  for (const [index, photo] of input.photos.entries()) {
+    const storagePath = `${input.userId}/${input.productId}/${crypto.randomUUID()}-${sanitizeFileName(photo.name)}`
+    const { error: uploadError } = await input.supabase.storage
+      .from(PRODUCT_MEDIA_BUCKET)
+      .upload(storagePath, photo, {
+        cacheControl: "3600",
+        contentType: photo.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      throw uploadError
+    }
+
+    uploadedPaths.push(storagePath)
+
+    const { data: publicUrlData } = input.supabase.storage
+      .from(PRODUCT_MEDIA_BUCKET)
+      .getPublicUrl(storagePath)
+
+    mediaRows.push({
+      product_id: input.productId,
+      url: publicUrlData.publicUrl,
+      storage_path: storagePath,
+      media_type: "image",
+      mime_type: photo.type,
+      name: photo.name,
+      size_bytes: photo.size,
+      sort_order: index,
+    })
+  }
+
+  return { mediaRows, uploadedPaths }
 }
 
 export async function POST(request: NextRequest) {
@@ -140,48 +200,6 @@ export async function POST(request: NextRequest) {
       .replace(/^-+|-+$/g, "")}-${Date.now().toString(36)}`
     const sellerLocation = [sellerVillageCity, sellerDistrict, sellerState].filter(Boolean).join(", ")
     const productId = crypto.randomUUID()
-    const uploadedPaths: string[] = []
-    const mediaRows = []
-
-    try {
-      for (const [index, photo] of photos.entries()) {
-        const storagePath = `${user.id}/${productId}/${crypto.randomUUID()}-${sanitizeFileName(photo.name)}`
-        const { error: uploadError } = await supabase.storage
-          .from(PRODUCT_MEDIA_BUCKET)
-          .upload(storagePath, photo, {
-            cacheControl: "3600",
-            contentType: photo.type,
-            upsert: false,
-          })
-
-        if (uploadError) {
-          throw new Error(uploadError.message)
-        }
-
-        uploadedPaths.push(storagePath)
-
-        const { data: publicUrlData } = supabase.storage
-          .from(PRODUCT_MEDIA_BUCKET)
-          .getPublicUrl(storagePath)
-
-        mediaRows.push({
-          product_id: productId,
-          url: publicUrlData.publicUrl,
-          storage_path: storagePath,
-          media_type: "image" as const,
-          mime_type: photo.type,
-          name: photo.name,
-          size_bytes: photo.size,
-          sort_order: index,
-        })
-      }
-    } catch (uploadError) {
-      if (uploadedPaths.length) {
-        await supabase.storage.from(PRODUCT_MEDIA_BUCKET).remove(uploadedPaths)
-      }
-
-      throw uploadError
-    }
 
     const { data: product, error: productError } = await supabase
       .from("products")
@@ -190,11 +208,11 @@ export async function POST(request: NextRequest) {
         category_id: existingCategory.id,
         description,
         delivery_info: "Seller will confirm pickup or delivery details after admin review.",
-        is_active: true,
+        is_active: false,
         name: productName,
         price,
         quantity_available: quantity,
-        review_status: "Pending Review",
+        review_status: DB_REVIEW_STATUS.pendingReview,
         availability_status: "Inactive",
         seller_id: user.id,
         seller_info: "Seller contact details are available to admins for review.",
@@ -202,7 +220,7 @@ export async function POST(request: NextRequest) {
         seller_name: sellerName,
         seller_phone: sellerPhone,
         slug: productSlug,
-        status: "Pending Review",
+        status: DB_REVIEW_STATUS.pendingReview,
         unit,
         unit_size: unit,
         seller_village_city: sellerVillageCity,
@@ -213,27 +231,36 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (productError || !product) {
-      if (uploadedPaths.length) {
-        await supabase.storage.from(PRODUCT_MEDIA_BUCKET).remove(uploadedPaths)
-      }
-
       throw new Error(productError?.message ?? "Unable to save product submission.")
     }
 
-    try {
-      if (mediaRows.length) {
-        const { error: mediaError } = await supabase.from("product_media").insert(mediaRows)
+    if (photos.length) {
+      let uploadedPaths: string[] = []
 
-        if (mediaError) {
-          throw new Error(mediaError.message)
+      try {
+        const uploadResult = await uploadProductPhotos({
+          supabase,
+          userId: user.id,
+          productId,
+          photos,
+        })
+        uploadedPaths = uploadResult.uploadedPaths
+
+        if (uploadResult.mediaRows.length) {
+          const { error: mediaError } = await supabase
+            .from("product_media")
+            .insert(uploadResult.mediaRows)
+
+          if (mediaError) {
+            throw mediaError
+          }
         }
+      } catch {
+        if (uploadedPaths.length) {
+          await supabase.storage.from(PRODUCT_MEDIA_BUCKET).remove(uploadedPaths)
+        }
+        // Storage is optional — product submission still succeeds without photos.
       }
-    } catch (mediaError) {
-      if (uploadedPaths.length) {
-        await supabase.storage.from(PRODUCT_MEDIA_BUCKET).remove(uploadedPaths)
-      }
-
-      throw mediaError
     }
 
     return NextResponse.json({

@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import { ImageIcon, X } from "lucide-react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,58 @@ function formatFileSize(size: number) {
   }
 
   return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
+
+function requiredFormValue(formData: FormData, key: string) {
+  const value = formData.get(key)
+  return typeof value === "string" ? value.trim() : ""
+}
+
+function parseNumber(value: string) {
+  const match = value.match(/\d[\d,]*(?:\.\d+)?/)
+  return match ? Number(match[0].replace(/,/g, "")) : Number.NaN
+}
+
+function validateSubmission(formData: FormData, photoCount: number) {
+  const sellerName = requiredFormValue(formData, "sellerName")
+  const sellerPhone = requiredFormValue(formData, "sellerPhone")
+  const sellerVillageCity = requiredFormValue(formData, "sellerVillageCity")
+  const sellerDistrict = requiredFormValue(formData, "sellerDistrict")
+  const sellerState = requiredFormValue(formData, "sellerState")
+  const productName = requiredFormValue(formData, "productName")
+  const categoryId = requiredFormValue(formData, "categoryId")
+  const quantityText = requiredFormValue(formData, "quantity")
+  const unit = requiredFormValue(formData, "unit")
+  const priceText = requiredFormValue(formData, "price")
+  const description = requiredFormValue(formData, "description")
+
+  if (!sellerName) return "Enter seller / farmer name."
+  if (!sellerPhone) return "Enter phone number."
+  if (!sellerVillageCity) return "Enter village / city."
+  if (!sellerDistrict) return "Enter district."
+  if (!sellerState) return "Enter state."
+  if (!productName) return "Enter product name."
+  if (!categoryId) return "Select a category."
+  if (!quantityText) return "Enter quantity."
+  if (!unit) return "Select a unit."
+  if (!priceText) return "Enter price."
+  if (!description) return "Enter product description."
+
+  const quantity = parseNumber(quantityText)
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    return "Enter a valid quantity."
+  }
+
+  const price = parseNumber(priceText)
+  if (!Number.isFinite(price) || price <= 0) {
+    return "Enter a valid price."
+  }
+
+  if (photoCount > MAX_PHOTOS) {
+    return `Select up to ${MAX_PHOTOS} product photos.`
+  }
+
+  return null
 }
 
 function PhotoPreviewList({
@@ -80,14 +132,39 @@ function PhotoPreviewList({
   )
 }
 
+function SubmitSuccessPanel({ onSubmitAnother }: { onSubmitAnother: () => void }) {
+  return (
+    <section className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-center shadow-sm">
+      <p className="text-lg font-semibold text-emerald-950">Product submitted for review.</p>
+      <p className="mt-2 text-sm text-emerald-900/80">
+        We will review your listing and show it to buyers after approval.
+      </p>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <Button asChild className="h-12 rounded-xl bg-green-800 text-base font-semibold text-white hover:bg-green-900">
+          <Link href="/my-submissions">View My Submissions</Link>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 rounded-xl text-base font-semibold"
+          onClick={onSubmitAnother}
+        >
+          Submit another product
+        </Button>
+      </div>
+    </section>
+  )
+}
+
 export function FarmerProductForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isLoadingCategories, setIsLoadingCategories] = React.useState(true)
   const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
   const [photos, setPhotos] = React.useState<PhotoPreview[]>([])
   const [message, setMessage] = React.useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = React.useState(false)
   const photoInputRef = React.useRef<HTMLInputElement>(null)
-  const router = useRouter()
+  const formKey = React.useRef(0)
 
   React.useEffect(() => {
     return () => {
@@ -132,6 +209,12 @@ export function FarmerProductForm() {
     e.preventDefault()
     const form = e.currentTarget
     const formData = new FormData(form)
+    const validationError = validateSubmission(formData, photos.length)
+
+    if (validationError) {
+      setMessage(validationError)
+      return
+    }
 
     setIsSubmitting(true)
     setMessage(null)
@@ -143,10 +226,7 @@ export function FarmerProductForm() {
       })
       const responsePayload = (await response.json()) as {
         error?: string
-        product?: {
-          id: string
-          status: string
-        }
+        message?: string
       }
 
       if (!response.ok) {
@@ -155,8 +235,7 @@ export function FarmerProductForm() {
 
       form.reset()
       clearPhotos()
-      router.push("/my-submissions")
-      router.refresh()
+      setSubmitSuccess(true)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit product.")
     } finally {
@@ -207,8 +286,18 @@ export function FarmerProductForm() {
     }
   }
 
+  function handleSubmitAnother() {
+    setSubmitSuccess(false)
+    setMessage(null)
+    formKey.current += 1
+  }
+
+  if (submitSuccess) {
+    return <SubmitSuccessPanel onSubmitAnother={handleSubmitAnother} />
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form key={formKey.current} onSubmit={handleSubmit} className="space-y-4">
       <section className={sectionClassName}>
         <h2 className="mb-4 text-lg font-bold">Seller details</h2>
         <div className="space-y-4">
@@ -359,7 +448,7 @@ export function FarmerProductForm() {
         <h2 className="mb-4 text-lg font-bold">Product photos</h2>
         <div className="space-y-3">
           <Label htmlFor="product-photos" className={labelClassName}>
-            Upload photos
+            Upload photos <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
           <label
             htmlFor="product-photos"
