@@ -3,7 +3,7 @@ import Link from "next/link"
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import { CartLink } from "@/components/cart/cart-link"
 import { Logo } from "@/components/logo"
-import { MobileCartLink, MobileSiteMenu } from "@/components/mobile-site-menu"
+import { MobileCartLink, MobileSearchLink, MobileSiteMenu } from "@/components/mobile-site-menu"
 import { Button } from "@/components/ui/button"
 import { getCurrentProfile } from "@/lib/auth/roles"
 
@@ -20,6 +20,7 @@ export async function SiteHeader() {
       <style>
         {`
           .rb-mobile-only { display: block; }
+          .rb-mobile-actions { display: flex; }
           .rb-mobile-quick { display: none; }
           .rb-desktop-nav { display: none; }
           .rb-mobile-menu-layer { top: 4.75rem; }
@@ -66,7 +67,8 @@ export async function SiteHeader() {
               RaithuBridge
             </span>
           </Link>
-          <div className="rb-mobile-only">
+          <div className="rb-mobile-only rb-mobile-actions items-center gap-2">
+            <MobileSearchLink />
             <MobileCartLink />
           </div>
         </div>

@@ -148,3 +148,5 @@ export function mapSampleProductToApprovedProduct(product: SampleProduct): Appro
     })),
   }
 }
+
+export const sampleApprovedProducts = sampleProducts.map(mapSampleProductToApprovedProduct)

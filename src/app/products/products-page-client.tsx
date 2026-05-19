@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Minus, Plus, ShoppingCart } from "lucide-react"
 
 import { useCart } from "@/components/cart/cart-provider"
@@ -66,6 +66,7 @@ function QuantityControl({
 
 function ProductCard({ product }: { product: SampleProduct }) {
   const { addItem } = useCart()
+  const router = useRouter()
   const [quantity, setQuantity] = React.useState(1)
 
   function addToCart(event: React.MouseEvent<HTMLButtonElement>) {
@@ -74,9 +75,27 @@ function ProductCard({ product }: { product: SampleProduct }) {
     addItem(product.id, quantity)
   }
 
+  function openProductDetails() {
+    router.push(`/products/${product.id}`)
+  }
+
+  function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      openProductDetails()
+    }
+  }
+
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-1 hover:shadow-xl">
-      <Link href={`/products/${product.id}`} className="block">
+    <article
+      role="link"
+      tabIndex={0}
+      aria-label={`View details for ${product.name}`}
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      onClick={openProductDetails}
+      onKeyDown={handleCardKeyDown}
+    >
+      <div className="block">
         <div className="h-32 overflow-hidden bg-muted sm:h-40 lg:h-44">
           <img
             src={product.images[0]}
@@ -95,7 +114,7 @@ function ProductCard({ product }: { product: SampleProduct }) {
             {product.category}
           </Badge>
         </div>
-      </Link>
+      </div>
       <div className="mt-auto space-y-3 px-3 pb-3">
         <QuantityControl
           quantity={quantity}

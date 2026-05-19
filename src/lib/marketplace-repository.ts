@@ -12,6 +12,7 @@ import {
   type ProductMediaAsset,
   type SubmissionStatus,
 } from "@/lib/marketplace-data"
+import { sampleApprovedProducts } from "@/lib/sample-products"
 import { shouldUseSampleData } from "@/lib/supabase/env"
 import type { Database } from "@/types/database"
 
@@ -161,6 +162,21 @@ async function queryProducts(ids?: string[]) {
 export async function getProducts(ids?: string[]) {
   try {
     const products = await queryProducts(ids)
+    if (ids?.length) {
+      const productsById = new Map(products.map((product) => [product.id, product]))
+
+      for (const product of sampleApprovedProducts) {
+        if (ids.includes(product.id) && !productsById.has(product.id)) {
+          productsById.set(product.id, product)
+        }
+      }
+
+      return ids.flatMap((id) => {
+        const product = productsById.get(id)
+        return product ? [product] : []
+      })
+    }
+
     if (products.length || !shouldUseSampleData()) {
       return products
     }
@@ -168,11 +184,15 @@ export async function getProducts(ids?: string[]) {
     // Local development can opt into sample fixtures before Supabase is ready.
   }
 
-  return shouldUseSampleData()
-    ? ids?.length
-      ? APPROVED_PRODUCTS.filter((product) => ids.includes(product.id))
-      : APPROVED_PRODUCTS
-    : []
+  if (!shouldUseSampleData()) {
+    return []
+  }
+
+  const fallbackProducts = [...sampleApprovedProducts, ...APPROVED_PRODUCTS]
+
+  return ids?.length
+    ? fallbackProducts.filter((product) => ids.includes(product.id))
+    : fallbackProducts
 }
 
 export async function getProduct(id: string) {
@@ -201,7 +221,7 @@ export async function getCategories() {
   }
 
   return shouldUseSampleData()
-    ? Array.from(new Set(APPROVED_PRODUCTS.map((product) => product.category))).map((name) => ({
+    ? Array.from(new Set([...sampleApprovedProducts, ...APPROVED_PRODUCTS].map((product) => product.category))).map((name) => ({
         id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
         name,
         slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),

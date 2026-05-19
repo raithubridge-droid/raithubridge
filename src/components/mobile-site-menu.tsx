@@ -10,6 +10,7 @@ import {
   Menu,
   PackageSearch,
   PenLine,
+  Search,
   ShoppingCart,
   UserPlus,
   X,
@@ -28,14 +29,42 @@ type MobileSiteMenuProps = {
 const drawerLinkClass =
   "flex min-h-12 items-center gap-3 rounded-xl border border-border/70 bg-card/90 px-4 py-3 text-base font-semibold text-foreground shadow-sm transition-colors hover:bg-primary/10"
 
-export function MobileCartLink() {
+const CLOSE_MOBILE_MENU_EVENT = "raithubridge-close-mobile-menu"
+
+function closeOpenMobileMenu() {
+  window.dispatchEvent(new Event(CLOSE_MOBILE_MENU_EVENT))
+}
+
+const mobileHeaderIconClass =
+  "relative flex size-11 items-center justify-center rounded-xl border border-border/70 bg-card/80 text-foreground shadow-sm transition-colors hover:bg-primary/10"
+
+export function MobileSearchLink() {
+  return (
+    <Link
+      href="/search"
+      aria-label="Search products"
+      className={mobileHeaderIconClass}
+      onClick={closeOpenMobileMenu}
+    >
+      <Search className="size-5" aria-hidden />
+    </Link>
+  )
+}
+
+export function MobileCartLink({ onClick }: { onClick?: () => void }) {
   const { itemCount } = useCart()
+
+  function handleClick() {
+    closeOpenMobileMenu()
+    onClick?.()
+  }
 
   return (
     <Link
       href="/cart"
       aria-label={`Cart with ${itemCount} item${itemCount === 1 ? "" : "s"}`}
-      className="relative flex size-11 items-center justify-center rounded-xl border border-border/70 bg-card/80 text-foreground shadow-sm transition-colors hover:bg-primary/10"
+      className={mobileHeaderIconClass}
+      onClick={handleClick}
     >
       <ShoppingCart className="size-5" aria-hidden />
       <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[0.68rem] font-bold leading-none text-primary-foreground">
@@ -60,8 +89,10 @@ export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteM
     }
 
     document.addEventListener("keydown", handleKeyDown)
+    window.addEventListener(CLOSE_MOBILE_MENU_EVENT, closeMenu)
     return () => {
       document.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener(CLOSE_MOBILE_MENU_EVENT, closeMenu)
     }
   }, [isOpen])
 
@@ -84,8 +115,14 @@ export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteM
       </Button>
 
       {isOpen ? (
-        <div className="rb-mobile-menu-layer fixed inset-x-0 z-[100]" role="dialog" aria-modal="true">
-          <aside className="mx-auto box-border max-h-[calc(100dvh-5.5rem)] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto rounded-2xl border border-border/80 bg-background p-4 shadow-2xl ring-1 ring-primary/10 min-[420px]:max-h-[calc(100dvh-9rem)]">
+        <div className="rb-mobile-menu-layer fixed inset-x-0 bottom-0 z-[100]" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            aria-label="Close navigation menu"
+            onClick={closeMenu}
+          />
+          <aside className="relative mx-auto box-border max-h-[calc(100dvh-5.5rem)] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto rounded-2xl border border-border/80 bg-background p-4 shadow-2xl ring-1 ring-primary/10 min-[420px]:max-h-[calc(100dvh-9rem)]">
             <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
               <div>
                 <p className="font-heading text-lg font-bold text-foreground">RaithuBridge</p>
