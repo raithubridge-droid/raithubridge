@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
 
   const sellerName = requiredString(body, "sellerName")
   const sellerPhone = requiredString(body, "sellerPhone")
-  const sellerWhatsapp = requiredString(body, "sellerWhatsapp")
   const sellerVillageCity = requiredString(body, "sellerVillageCity")
   const sellerDistrict = requiredString(body, "sellerDistrict")
   const sellerState = requiredString(body, "sellerState")
@@ -92,7 +91,6 @@ export async function POST(request: NextRequest) {
   if (
     !sellerName ||
     !sellerPhone ||
-    !sellerWhatsapp ||
     !sellerVillageCity ||
     !sellerDistrict ||
     !sellerState ||
@@ -203,7 +201,6 @@ export async function POST(request: NextRequest) {
         seller_location: sellerLocation,
         seller_name: sellerName,
         seller_phone: sellerPhone,
-        seller_whatsapp: sellerWhatsapp,
         slug: productSlug,
         status: "Pending Review",
         unit,

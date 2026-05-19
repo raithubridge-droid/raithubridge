@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
+import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { FarmerProductForm } from "@/components/farmer-product-form"
-import { Button } from "@/components/ui/button"
 import { getCurrentProfile } from "@/lib/auth/roles"
 
 export const metadata: Metadata = {
@@ -19,21 +19,25 @@ export default async function SubmitProductPage() {
   }
 
   return (
-    <main className="px-4 py-14 sm:py-20">
-      <div className="mx-auto w-full max-w-4xl">
-        <Button asChild variant="ghost" className="-ml-2 mb-8 h-11 text-base text-muted-foreground">
-          <Link href="/">Back to home</Link>
-        </Button>
-        <div className="max-w-3xl">
-          <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
-            Submit Product
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
-            Any logged-in user can buy products and submit products for review. Add seller
-            details, product information, photos, and videos so admins can review the listing.
-          </p>
-        </div>
-        <div className="mt-12">
+    <main className="px-4 py-4">
+      <div className="mx-auto w-full max-w-3xl">
+        <Link
+          href="/"
+          className="mb-2 inline-flex items-center gap-2 text-base font-medium text-green-900"
+        >
+          <ArrowLeft className="size-4 shrink-0" aria-hidden />
+          Back to home
+        </Link>
+
+        <h1 className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
+          Submit Product
+        </h1>
+
+        <p className="mt-3 text-base leading-7 text-muted-foreground">
+          Submit your farm product for review. Once approved, it will be visible to buyers.
+        </p>
+
+        <div className="mt-5">
           <FarmerProductForm />
         </div>
       </div>
