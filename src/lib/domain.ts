@@ -48,6 +48,15 @@ export const AVAILABILITY_STATUS_TONE_CLASS: Record<ProductAvailabilityStatus, s
   "Sold Out": "bg-red-100 text-red-900 border-red-200",
 }
 
+export const DB_REVIEW_STATUS = {
+  pendingReview: "pending_review",
+  onHold: "on_hold",
+  approved: "approved",
+  rejected: "rejected",
+} as const
+
+export type DbReviewStatus = (typeof DB_REVIEW_STATUS)[keyof typeof DB_REVIEW_STATUS]
+
 const REVIEW_STATUS_ALIASES: Record<string, ProductReviewStatus> = {
   Approved: "Approved",
   approved: "Approved",
@@ -58,11 +67,23 @@ const REVIEW_STATUS_ALIASES: Record<string, ProductReviewStatus> = {
   on_hold: "On Hold",
   Pending: "Pending Review",
   pending: "Pending Review",
+  pending_review: "Pending Review",
   "Pending Review": "Pending Review",
   draft: "Pending Review",
   Rejected: "Rejected",
   rejected: "Rejected",
   archived: "Rejected",
+}
+
+const REVIEW_STATUS_TO_DB: Record<ProductReviewStatus, DbReviewStatus> = {
+  "Pending Review": DB_REVIEW_STATUS.pendingReview,
+  "On Hold": DB_REVIEW_STATUS.onHold,
+  Approved: DB_REVIEW_STATUS.approved,
+  Rejected: DB_REVIEW_STATUS.rejected,
+}
+
+export function toDbReviewStatus(value: ProductReviewStatus): DbReviewStatus {
+  return REVIEW_STATUS_TO_DB[value]
 }
 
 const AVAILABILITY_STATUS_ALIASES: Record<string, ProductAvailabilityStatus> = {

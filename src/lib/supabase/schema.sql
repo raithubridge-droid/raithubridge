@@ -119,8 +119,11 @@ create table if not exists public.products (
       'available', 'limited', 'seasonal', 'draft', 'archived'
     )
   ),
-  review_status text not null default 'Pending Review' check (
-    review_status in ('Pending Review', 'On Hold', 'Approved', 'Rejected')
+  review_status text not null default 'pending_review' check (
+    review_status in (
+      'pending_review', 'on_hold', 'approved', 'rejected',
+      'Pending Review', 'On Hold', 'Approved', 'Rejected'
+    )
   ),
   availability_status text not null default 'Inactive' check (
     availability_status in ('Active', 'Inactive', 'Sold Out')
@@ -205,7 +208,7 @@ alter table public.products drop constraint if exists products_status_check;
 alter table public.products add constraint products_status_check check (
   status in (
     'Pending', 'Pending Review', 'On Hold', 'Approved', 'Rejected',
-    'pending', 'on_hold', 'approved', 'rejected',
+    'pending', 'pending_review', 'on_hold', 'approved', 'rejected',
     'available', 'limited', 'seasonal', 'draft', 'archived'
   )
 );
@@ -229,7 +232,12 @@ begin
   ) then
     alter table public.products
     add constraint products_review_status_check
-    check (review_status in ('Pending Review', 'On Hold', 'Approved', 'Rejected'));
+    check (
+      review_status in (
+        'pending_review', 'on_hold', 'approved', 'rejected',
+        'Pending Review', 'On Hold', 'Approved', 'Rejected'
+      )
+    );
   end if;
 
   if not exists (
@@ -241,13 +249,23 @@ begin
   end if;
 end $$;
 
+alter table public.products drop constraint if exists products_review_status_check;
+alter table public.products add constraint products_review_status_check check (
+  review_status in (
+    'pending_review', 'on_hold', 'approved', 'rejected',
+    'Pending Review', 'On Hold', 'Approved', 'Rejected'
+  )
+);
+
 update public.products
 set
   review_status = case
-    when status in ('Approved', 'approved', 'available', 'limited', 'seasonal') then 'Approved'
-    when status in ('On Hold', 'on_hold') then 'On Hold'
-    when status in ('Rejected', 'rejected', 'archived') then 'Rejected'
-    else 'Pending Review'
+    when review_status in ('Approved', 'approved')
+      or status in ('Approved', 'approved', 'available', 'limited', 'seasonal') then 'approved'
+    when review_status in ('On Hold', 'on_hold') or status in ('On Hold', 'on_hold') then 'on_hold'
+    when review_status in ('Rejected', 'rejected') or status in ('Rejected', 'rejected', 'archived')
+      then 'rejected'
+    else 'pending_review'
   end,
   availability_status = case
     when is_active = false then 'Inactive'
@@ -510,7 +528,7 @@ create policy "products_public_read_approved"
 on public.products for select to anon, authenticated
 using (
   is_active = true
-  and review_status = 'Approved'
+  and review_status in ('approved', 'Approved')
   and availability_status = 'Active'
 );
 
@@ -522,13 +540,19 @@ create policy "products_submitter_insert"
 on public.products for insert to authenticated
 with check (
   seller_id = auth.uid()
-  and review_status = 'Pending Review'
+  and review_status in ('pending_review', 'Pending Review')
 );
 
 create policy "products_submitter_update_own_pending"
 on public.products for update to authenticated
-using (seller_id = auth.uid() and review_status in ('Pending Review', 'On Hold'))
-with check (seller_id = auth.uid() and review_status = 'Pending Review');
+using (
+  seller_id = auth.uid()
+  and review_status in ('pending_review', 'Pending Review', 'on_hold', 'On Hold')
+)
+with check (
+  seller_id = auth.uid()
+  and review_status in ('pending_review', 'Pending Review')
+);
 
 create policy "products_admin_all"
 on public.products for all to authenticated
@@ -545,7 +569,7 @@ using (
     select 1 from public.products p
     where p.id = product_id
       and p.is_active = true
-      and p.review_status = 'Approved'
+      and p.review_status in ('approved', 'Approved')
       and p.availability_status = 'Active'
   )
 );
@@ -577,7 +601,7 @@ using (
     select 1 from public.products p
     where p.id = product_id
       and p.is_active = true
-      and p.review_status = 'Approved'
+      and p.review_status in ('approved', 'Approved')
       and p.availability_status = 'Active'
   )
 );

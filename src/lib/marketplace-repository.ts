@@ -104,7 +104,9 @@ async function queryProducts(ids?: string[]) {
     .from("products")
     .select("*")
     .eq("is_active", true)
-    .or("review_status.eq.Approved,status.in.(Approved,approved,available,limited,seasonal)")
+    .or(
+      "review_status.eq.approved,review_status.eq.Approved,status.in.(approved,Approved,available,limited,seasonal)"
+    )
     .eq("availability_status", "Active")
     .order("created_at", { ascending: false })
 

@@ -7,7 +7,15 @@ export type Json =
   | Json[]
 
 type UserRole = "user" | "admin"
-type ProductReviewStatus = "Pending Review" | "On Hold" | "Approved" | "Rejected"
+type ProductReviewStatus =
+  | "pending_review"
+  | "on_hold"
+  | "approved"
+  | "rejected"
+  | "Pending Review"
+  | "On Hold"
+  | "Approved"
+  | "Rejected"
 type ProductAvailabilityStatus = "Active" | "Inactive" | "Sold Out"
 type ProductStatus =
   | "Pending"
@@ -16,6 +24,7 @@ type ProductStatus =
   | "Approved"
   | "Rejected"
   | "pending"
+  | "pending_review"
   | "on_hold"
   | "approved"
   | "rejected"
