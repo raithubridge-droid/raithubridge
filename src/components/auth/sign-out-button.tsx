@@ -1,8 +1,14 @@
-import { redirect } from "next/navigation"
+"use client"
+
+import * as React from "react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
 import { hasSupabaseEnv } from "@/lib/supabase/env"
-import { createClient } from "@/lib/supabase/server"
+import { cn } from "@/lib/utils"
+
+const CLOSE_MOBILE_MENU_EVENT = "raithubridge-close-mobile-menu"
 
 type SignOutButtonProps = {
   buttonClassName?: string
@@ -10,28 +16,54 @@ type SignOutButtonProps = {
 }
 
 export function SignOutButton({ buttonClassName, formClassName }: SignOutButtonProps = {}) {
-  async function signOut() {
-    "use server"
+  const router = useRouter()
+  const [isSigningOut, setIsSigningOut] = React.useState(false)
+  const [message, setMessage] = React.useState<string | null>(null)
 
-    if (!hasSupabaseEnv()) {
-      redirect("/sign-in")
+  async function handleSignOut() {
+    setIsSigningOut(true)
+    setMessage(null)
+
+    try {
+      if (hasSupabaseEnv()) {
+        const supabase = createClient()
+        const { error } = await supabase.auth.signOut()
+
+        if (error) {
+          throw error
+        }
+      }
+
+      window.dispatchEvent(new Event(CLOSE_MOBILE_MENU_EVENT))
+      router.push("/")
+      router.refresh()
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Sign out failed:", error)
+      }
+
+      setMessage(
+        error instanceof Error ? error.message : "Unable to sign out. Please try again."
+      )
+      setIsSigningOut(false)
     }
-
-    const supabase = await createClient()
-    await supabase.auth.signOut()
-    redirect("/sign-in")
   }
 
   return (
-    <form action={signOut} className={formClassName}>
+    <div className={cn("w-full", formClassName)}>
       <Button
-        type="submit"
+        type="button"
         variant="ghost"
         size="default"
         className={buttonClassName ?? "h-10 px-3 text-base"}
+        disabled={isSigningOut}
+        onClick={() => void handleSignOut()}
       >
-        Sign Out
+        {isSigningOut ? "Signing out..." : "Sign Out"}
       </Button>
-    </form>
+      {message ? (
+        <p className="mt-2 text-sm text-destructive">{message}</p>
+      ) : null}
+    </div>
   )
 }

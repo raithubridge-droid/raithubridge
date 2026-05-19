@@ -15,6 +15,8 @@ import { getCurrentProfile } from "@/lib/auth/roles"
 const navLinkClass =
   "rounded-lg px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
 
+export const dynamic = "force-dynamic"
+
 export async function SiteHeader() {
   const { user, profile } = await getCurrentProfile()
   const isLoggedIn = Boolean(user)

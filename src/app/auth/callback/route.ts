@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache"
 import { NextResponse, type NextRequest } from "next/server"
 
 import { syncProfileFromUser } from "@/lib/auth/sync-profile"
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
   if (data.user) {
     await syncProfileFromUser(supabase, data.user)
   }
+
+  revalidatePath("/", "layout")
 
   return response
 }
