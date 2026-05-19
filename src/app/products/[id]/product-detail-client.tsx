@@ -119,7 +119,7 @@ export function ProductDetailClient({ initialProduct }: { initialProduct: Approv
                 </div>
 
                 <div>
-                  <h2 className="text-base font-bold text-foreground sm:text-lg">Farmer description</h2>
+                  <h2 className="text-base font-bold text-foreground sm:text-lg">Description</h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:text-base">
                     {product.description}
                   </p>

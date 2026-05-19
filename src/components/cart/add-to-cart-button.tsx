@@ -18,7 +18,9 @@ export function AddToCartButton({
   const { addItem } = useCart()
   const [added, setAdded] = React.useState(false)
 
-  function handleClick() {
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
     addItem(productId)
     setAdded(true)
     window.setTimeout(() => setAdded(false), 1400)

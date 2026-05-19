@@ -3,7 +3,12 @@ import Link from "next/link"
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import { CartLink } from "@/components/cart/cart-link"
 import { Logo } from "@/components/logo"
-import { MobileCartLink, MobileSiteMenu } from "@/components/mobile-site-menu"
+import {
+  MobileCartLink,
+  MobileHomeQuickLinks,
+  MobileSearchLink,
+  MobileSiteMenu,
+} from "@/components/mobile-site-menu"
 import { Button } from "@/components/ui/button"
 import { getCurrentProfile } from "@/lib/auth/roles"
 
@@ -20,6 +25,7 @@ export async function SiteHeader() {
       <style>
         {`
           .rb-mobile-only { display: block; }
+          .rb-mobile-actions { display: flex; }
           .rb-mobile-quick { display: none; }
           .rb-desktop-nav { display: none; }
           .rb-mobile-menu-layer { top: 4.75rem; }
@@ -66,25 +72,13 @@ export async function SiteHeader() {
               RaithuBridge
             </span>
           </Link>
-          <div className="rb-mobile-only">
+          <div className="rb-mobile-only rb-mobile-actions items-center gap-2">
+            <MobileSearchLink />
             <MobileCartLink />
           </div>
         </div>
 
-        <nav className="rb-mobile-quick grid-cols-2 gap-2" aria-label="Mobile quick links">
-          <Link
-            href="/products"
-            className="flex min-h-11 items-center justify-center rounded-xl border border-primary/15 bg-card/90 px-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-primary/10"
-          >
-            Products
-          </Link>
-          <Link
-            href="/submit-product"
-            className="flex min-h-11 items-center justify-center rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            Submit Product
-          </Link>
-        </nav>
+        <MobileHomeQuickLinks />
 
         <nav
           className="rb-desktop-nav items-center gap-1 flex-wrap justify-end"

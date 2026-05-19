@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Minus, Plus, ShoppingCart } from "lucide-react"
 
 import { useCart } from "@/components/cart/cart-provider"
@@ -66,6 +66,7 @@ function QuantityControl({
 
 function ProductCard({ product }: { product: SampleProduct }) {
   const { addItem } = useCart()
+  const router = useRouter()
   const [quantity, setQuantity] = React.useState(1)
 
   function addToCart(event: React.MouseEvent<HTMLButtonElement>) {
@@ -74,9 +75,27 @@ function ProductCard({ product }: { product: SampleProduct }) {
     addItem(product.id, quantity)
   }
 
+  function openProductDetails() {
+    router.push(`/products/${product.id}`)
+  }
+
+  function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      openProductDetails()
+    }
+  }
+
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-1 hover:shadow-xl">
-      <Link href={`/products/${product.id}`} className="block">
+    <article
+      role="link"
+      tabIndex={0}
+      aria-label={`View details for ${product.name}`}
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm ring-1 ring-primary/5 transition-[box-shadow,transform] hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      onClick={openProductDetails}
+      onKeyDown={handleCardKeyDown}
+    >
+      <div className="block">
         <div className="h-32 overflow-hidden bg-muted sm:h-40 lg:h-44">
           <img
             src={product.images[0]}
@@ -95,7 +114,7 @@ function ProductCard({ product }: { product: SampleProduct }) {
             {product.category}
           </Badge>
         </div>
-      </Link>
+      </div>
       <div className="mt-auto space-y-3 px-3 pb-3">
         <QuantityControl
           quantity={quantity}
@@ -166,7 +185,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
       : displayProducts.filter((product) => product.category === activeTab)
 
   return (
-    <main className="px-3 py-5 sm:px-4 sm:py-10">
+    <main className="px-3 pb-5 pt-0 sm:px-4 sm:py-10">
       <div className="mx-auto w-full max-w-6xl">
         {errorMessage ? (
           <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:text-base">
@@ -174,7 +193,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
           </p>
         ) : null}
 
-        <div className="sticky top-[7.25rem] z-20 -mx-3 border-y border-border/60 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:pt-0">
+        <div className="sticky top-16 z-20 -mx-3 mb-4 border-y border-border/60 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:mb-0 md:border-0 md:bg-transparent md:px-0 md:pt-0">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {categoryTabs.map((tab) => (
               <button
@@ -212,7 +231,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
           </Card>
         ) : null}
 
-        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 pt-1 sm:grid-cols-3 lg:grid-cols-4">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
