@@ -14,12 +14,12 @@ export function SignOutButton({ buttonClassName, formClassName }: SignOutButtonP
     "use server"
 
     if (!hasSupabaseEnv()) {
-      redirect("/signin")
+      redirect("/sign-in")
     }
 
     const supabase = await createClient()
     await supabase.auth.signOut()
-    redirect("/signin")
+    redirect("/sign-in")
   }
 
   return (

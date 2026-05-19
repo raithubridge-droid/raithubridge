@@ -16,7 +16,7 @@ export default async function AdminPage() {
   const { user, profile } = await getCurrentProfile()
 
   if (!user) {
-    redirect("/signin")
+    redirect("/sign-in")
   }
 
   if (profile?.role !== "admin") {

@@ -172,7 +172,7 @@ export function CartPageClient({ isSignedIn }: { isSignedIn: boolean }) {
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Button asChild size="sm" className="rounded-xl text-sm font-semibold">
-                <Link href="/signin">Sign In</Link>
+                <Link href="/sign-in">Sign In</Link>
               </Button>
               <Button type="button" variant="outline" size="sm" className="rounded-xl text-sm font-semibold">
                 Continue as Guest

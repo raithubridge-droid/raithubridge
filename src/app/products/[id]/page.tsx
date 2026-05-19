@@ -3,13 +3,8 @@ import { notFound } from "next/navigation"
 
 import { ProductDetailClient } from "@/app/products/[id]/product-detail-client"
 import { APPROVED_PRODUCTS } from "@/lib/marketplace-data"
-import { getProduct } from "@/lib/marketplace-repository"
-import {
-  getSampleProduct,
-  mapSampleProductToApprovedProduct,
-  sampleProducts,
-} from "@/lib/sample-products"
-import { shouldUseSampleData } from "@/lib/supabase/env"
+import { resolveProduct, resolveSampleProduct } from "@/lib/resolve-product"
+import { sampleProducts } from "@/lib/sample-products"
 
 type ProductDetailPageProps = {
   params: Promise<{
@@ -17,19 +12,20 @@ type ProductDetailPageProps = {
   }>
 }
 
+export const dynamicParams = true
+
 export function generateStaticParams() {
-  return shouldUseSampleData()
-    ? [...APPROVED_PRODUCTS.map((product) => product.id), ...sampleProducts.map((product) => product.id)].map(
-        (id) => ({
-          id,
-        })
-      )
-    : []
+  const ids = new Set([
+    ...sampleProducts.map((product) => product.id),
+    ...APPROVED_PRODUCTS.map((product) => product.id),
+  ])
+
+  return Array.from(ids).map((id) => ({ id }))
 }
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { id } = await params
-  const product = (await getProduct(id)) ?? getSampleProduct(id)
+  const product = resolveSampleProduct(id) ?? (await resolveProduct(id))
 
   return {
     title: product?.name ?? "Product",
@@ -39,10 +35,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id } = await params
-  const product = (await getProduct(id)) ?? (() => {
-    const sampleProduct = getSampleProduct(id)
-    return sampleProduct ? mapSampleProductToApprovedProduct(sampleProduct) : null
-  })()
+  const product = await resolveProduct(id)
 
   if (!product) {
     notFound()

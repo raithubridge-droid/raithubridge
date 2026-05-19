@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 
-import { getProduct } from "@/lib/marketplace-repository"
+import { resolveProduct, resolveSampleProduct } from "@/lib/resolve-product"
 
 type ProductRouteContext = {
   params: Promise<{
@@ -10,7 +10,7 @@ type ProductRouteContext = {
 
 export async function GET(_request: NextRequest, { params }: ProductRouteContext) {
   const { id } = await params
-  const product = await getProduct(id)
+  const product = (await resolveProduct(id)) ?? resolveSampleProduct(id)
 
   if (!product) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 })

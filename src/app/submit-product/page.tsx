@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 
+import { AuthRequiredCard } from "@/components/auth/auth-required-card"
 import { FarmerProductForm } from "@/components/farmer-product-form"
 import { getCurrentProfile } from "@/lib/auth/roles"
 
@@ -13,10 +13,6 @@ export const metadata: Metadata = {
 
 export default async function SubmitProductPage() {
   const { user } = await getCurrentProfile()
-
-  if (!user) {
-    redirect("/signin")
-  }
 
   return (
     <main className="px-4 py-4">
@@ -33,13 +29,23 @@ export default async function SubmitProductPage() {
           Submit Product
         </h1>
 
-        <p className="mt-3 text-base leading-7 text-muted-foreground">
-          Submit your farm product for review. Once approved, it will be visible to buyers.
-        </p>
-
-        <div className="mt-5">
-          <FarmerProductForm />
-        </div>
+        {user ? (
+          <>
+            <p className="mt-3 text-base leading-7 text-muted-foreground">
+              Submit your farm product for review. Once approved, it will be visible to buyers.
+            </p>
+            <div className="mt-5">
+              <FarmerProductForm />
+            </div>
+          </>
+        ) : (
+          <div className="mt-5">
+            <AuthRequiredCard
+              message="Please sign in with your mobile number or Gmail to submit your product."
+              nextPath="/submit-product"
+            />
+          </div>
+        )}
       </div>
     </main>
   )

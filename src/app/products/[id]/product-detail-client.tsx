@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ApprovedProduct } from "@/lib/marketplace-data"
+import { getSampleProduct } from "@/lib/sample-products"
 
 export function ProductDetailClient({ initialProduct }: { initialProduct: ApprovedProduct }) {
   const [product, setProduct] = React.useState(initialProduct)
@@ -18,18 +19,26 @@ export function ProductDetailClient({ initialProduct }: { initialProduct: Approv
   const { addItem } = useCart()
 
   React.useEffect(() => {
+    if (getSampleProduct(initialProduct.id)) {
+      return
+    }
+
     let isMounted = true
 
     async function loadProduct() {
       try {
         const response = await fetch(`/api/products/${initialProduct.id}`)
+        if (!response.ok) {
+          return
+        }
+
         const payload = (await response.json()) as { product?: ApprovedProduct }
 
         if (isMounted && payload.product) {
           setProduct(payload.product)
         }
       } catch {
-        // Keep static initial product when the API is unavailable.
+        // Keep server-rendered product when the API is unavailable.
       }
     }
 

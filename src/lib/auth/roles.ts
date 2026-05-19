@@ -37,10 +37,16 @@ export async function getCurrentProfile() {
     return { user, profile }
   }
 
+  const metadata = user.user_metadata ?? {}
+
   const fallbackProfile = {
     id: user.id,
     email: user.email ?? null,
-    full_name: user.user_metadata.full_name ?? user.user_metadata.name ?? null,
+    phone: user.phone ?? null,
+    full_name:
+      (typeof metadata.full_name === "string" && metadata.full_name) ||
+      (typeof metadata.name === "string" && metadata.name) ||
+      null,
     role: "user" as const,
     updated_at: new Date().toISOString(),
   }
@@ -58,7 +64,7 @@ export async function requireRole(allowedRoles: UserRole[]) {
   const { user, profile } = await getCurrentProfile()
 
   if (!user) {
-    redirect("/signin")
+    redirect("/sign-in")
   }
 
   if (!profile || !allowedRoles.includes(profile.role)) {
