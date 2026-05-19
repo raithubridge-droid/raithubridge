@@ -15,6 +15,16 @@ const MAX_PHOTOS = 6
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
 
+const sectionClassName =
+  "rounded-2xl border border-border/80 bg-card/95 p-4 shadow-sm"
+const labelClassName = "mb-1.5 block text-sm font-medium"
+const inputClassName = "h-11 rounded-xl px-3 text-base"
+const selectClassName = cn(
+  inputClassName,
+  "w-full border border-input bg-transparent py-2 outline-none",
+  "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+)
+
 type PhotoPreview = {
   file: File
   url: string
@@ -40,7 +50,7 @@ function PhotoPreviewList({
   }
 
   return (
-    <div className="rounded-xl border border-border/70 bg-background/75 p-4">
+    <div className="rounded-xl border border-border/70 bg-background/75 p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-foreground">
           {photos.length} photo
@@ -51,14 +61,14 @@ function PhotoPreviewList({
           Clear
         </Button>
       </div>
-      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+      <ul className="mt-2 grid gap-2 sm:grid-cols-2">
         {photos.map(({ file, url }) => (
           <li
             key={`${file.name}-${file.size}`}
             className="overflow-hidden rounded-lg border border-border/60 bg-muted/60 text-sm"
           >
             <img src={url} alt={file.name} className="aspect-[4/3] w-full object-cover" />
-            <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex items-center gap-2 px-2 py-1.5">
               <ImageIcon className="size-4 shrink-0 text-primary" aria-hidden />
               <span className="min-w-0 flex-1 truncate">{file.name}</span>
               <span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span>
@@ -198,58 +208,84 @@ export function FarmerProductForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mx-auto max-w-3xl space-y-8 rounded-2xl border border-border/80 bg-card/95 p-6 shadow-lg ring-1 ring-primary/5 sm:p-10"
-    >
-      <fieldset className="space-y-5">
-        <legend className="text-lg font-semibold text-foreground">Seller details</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="sellerName">Seller / farmer name</Label>
-            <Input id="sellerName" name="sellerName" required autoComplete="name" />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <section className={sectionClassName}>
+        <h2 className="mb-4 text-lg font-bold">Seller details</h2>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="sellerName" className={labelClassName}>
+              Seller / farmer name
+            </Label>
+            <Input
+              id="sellerName"
+              name="sellerName"
+              required
+              autoComplete="name"
+              className={inputClassName}
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="sellerPhone">Phone</Label>
-            <Input id="sellerPhone" name="sellerPhone" type="tel" required autoComplete="tel" placeholder="+91" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sellerWhatsapp">WhatsApp number</Label>
-            <Input id="sellerWhatsapp" name="sellerWhatsapp" type="tel" required autoComplete="tel" placeholder="+91" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sellerVillageCity">Village / city</Label>
-            <Input id="sellerVillageCity" name="sellerVillageCity" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sellerDistrict">District</Label>
-            <Input id="sellerDistrict" name="sellerDistrict" required />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="sellerState">State</Label>
-            <Input id="sellerState" name="sellerState" required />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="sellerPhone" className={labelClassName}>
+                Phone
+              </Label>
+              <Input
+                id="sellerPhone"
+                name="sellerPhone"
+                type="tel"
+                required
+                autoComplete="tel"
+                placeholder="+91"
+                className={inputClassName}
+              />
+            </div>
+            <div>
+              <Label htmlFor="sellerVillageCity" className={labelClassName}>
+                Village / city
+              </Label>
+              <Input
+                id="sellerVillageCity"
+                name="sellerVillageCity"
+                required
+                className={inputClassName}
+              />
+            </div>
+            <div>
+              <Label htmlFor="sellerDistrict" className={labelClassName}>
+                District
+              </Label>
+              <Input id="sellerDistrict" name="sellerDistrict" required className={inputClassName} />
+            </div>
+            <div>
+              <Label htmlFor="sellerState" className={labelClassName}>
+                State
+              </Label>
+              <Input id="sellerState" name="sellerState" required className={inputClassName} />
+            </div>
           </div>
         </div>
-      </fieldset>
+      </section>
 
-      <fieldset className="space-y-5">
-        <legend className="text-lg font-semibold text-foreground">Product details</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="productName">Product name</Label>
-            <Input id="productName" name="productName" required placeholder="e.g. Sona Masoori Rice" />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="category">Category</Label>
-            <select
-              id="category"
-              name="categoryId"
+      <section className={sectionClassName}>
+        <h2 className="mb-4 text-lg font-bold">Product details</h2>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="productName" className={labelClassName}>
+              Product name
+            </Label>
+            <Input
+              id="productName"
+              name="productName"
               required
-              className={cn(
-                "h-11 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base outline-none",
-                "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              )}
-            >
+              placeholder="e.g. Sona Masoori Rice"
+              className={inputClassName}
+            />
+          </div>
+          <div>
+            <Label htmlFor="category" className={labelClassName}>
+              Category
+            </Label>
+            <select id="category" name="categoryId" required className={selectClassName}>
               <option value="">
                 {isLoadingCategories
                   ? "Loading categories..."
@@ -264,57 +300,74 @@ export function FarmerProductForm() {
               ))}
             </select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
-            <Input id="quantity" name="quantity" required inputMode="decimal" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="quantity" className={labelClassName}>
+                Quantity
+              </Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                required
+                inputMode="decimal"
+                className={inputClassName}
+              />
+            </div>
+            <div>
+              <Label htmlFor="unit" className={labelClassName}>
+                Unit
+              </Label>
+              <select id="unit" name="unit" required className={selectClassName}>
+                <option value="">Select unit</option>
+                <option value="kg">kg</option>
+                <option value="quintal">Quintal</option>
+                <option value="tonne">Tonne</option>
+                <option value="bags">Bags</option>
+                <option value="L">L (litres)</option>
+              </select>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="unit">Unit</Label>
-            <select
-              id="unit"
-              name="unit"
+          <div>
+            <Label htmlFor="price" className={labelClassName}>
+              Price
+            </Label>
+            <Input
+              id="price"
+              name="price"
               required
-              className={cn(
-                "h-11 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base outline-none",
-                "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              )}
-            >
-              <option value="">Select unit</option>
-              <option value="kg">kg</option>
-              <option value="quintal">Quintal</option>
-              <option value="tonne">Tonne</option>
-              <option value="bags">Bags</option>
-              <option value="L">L (litres)</option>
-            </select>
+              placeholder="e.g. Rs. 95 / kg"
+              className={inputClassName}
+            />
           </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="price">Price</Label>
-            <Input id="price" name="price" required placeholder="e.g. Rs. 95 / kg" />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="description">Description</Label>
+          <div>
+            <Label htmlFor="description" className={labelClassName}>
+              Description
+            </Label>
             <Textarea
               id="description"
               name="description"
-              rows={5}
+              rows={3}
               required
-              placeholder="Variety, quality, harvest date, packing, delivery or pickup details"
+              placeholder="Variety, quality, packing, and other product details"
+              className="min-h-24 rounded-xl px-3 py-3 text-base"
             />
           </div>
         </div>
-      </fieldset>
+      </section>
 
-      <fieldset className="space-y-5">
-        <legend className="text-lg font-semibold text-foreground">Product media</legend>
+      <section className={sectionClassName}>
+        <h2 className="mb-4 text-lg font-bold">Product photos</h2>
         <div className="space-y-3">
-          <Label htmlFor="product-photos">Product photos</Label>
+          <Label htmlFor="product-photos" className={labelClassName}>
+            Upload photos
+          </Label>
           <label
             htmlFor="product-photos"
-            className="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-primary/35 bg-primary/5 px-5 py-8 text-center transition-colors hover:bg-primary/10"
+            className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-primary/35 bg-primary/5 px-3 py-4 text-center transition-colors hover:bg-primary/10"
           >
-            <ImageIcon className="size-9 text-primary" aria-hidden />
-            <span className="mt-3 text-base font-semibold text-foreground">Add photos</span>
-            <span className="mt-1 text-sm text-muted-foreground">
+            <ImageIcon className="size-7 text-primary" aria-hidden />
+            <span className="mt-1.5 text-sm font-semibold text-foreground">Add photos</span>
+            <span className="mt-0.5 text-xs text-muted-foreground">
               JPG, PNG, WebP, or GIF. Up to {MAX_PHOTOS} photos, {formatFileSize(MAX_PHOTO_SIZE_BYTES)} each.
             </span>
           </label>
@@ -329,11 +382,8 @@ export function FarmerProductForm() {
             onChange={handlePhotoChange}
           />
           <PhotoPreviewList photos={photos} onClear={clearPhotos} />
-          <p className="text-sm text-muted-foreground">
-            Videos are not supported yet. Add product photos for admin review.
-          </p>
         </div>
-      </fieldset>
+      </section>
 
       {message ? (
         <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -343,10 +393,10 @@ export function FarmerProductForm() {
 
       <Button
         type="submit"
-        className="h-12 w-full rounded-xl text-base font-semibold sm:w-auto sm:min-w-56"
+        className="h-12 w-full rounded-xl bg-green-800 text-base font-semibold text-white hover:bg-green-900"
         disabled={isSubmitting || isLoadingCategories || !categories.length}
       >
-        {isSubmitting ? "Submitting..." : "Submit for review"}
+        {isSubmitting ? "Submitting..." : "Submit for Review"}
       </Button>
     </form>
   )
