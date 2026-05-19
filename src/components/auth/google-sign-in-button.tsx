@@ -61,20 +61,33 @@ export function GoogleSignInButton({
     try {
       const supabase = createClient()
       const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo,
+          skipBrowserRedirect: false,
         },
       })
 
       if (error) {
         throw error
       }
+
+      if (data?.url) {
+        window.location.assign(data.url)
+        return
+      }
+
+      throw new Error("Google sign-in URL was not returned. Check Supabase Google provider settings.")
     } catch (error) {
-      setMessage(
+      const errorMessage =
         error instanceof Error ? error.message : "Unable to start Gmail sign-in."
-      )
+
+      if (process.env.NODE_ENV === "development") {
+        console.error("Google sign-in failed:", error)
+      }
+
+      setMessage(errorMessage)
       setIsLoading(false)
     }
   }
@@ -95,7 +108,7 @@ export function GoogleSignInButton({
         {isLoading ? "Redirecting..." : "Continue with Gmail"}
       </Button>
       {message ? (
-        <p className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
+        <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {message}
         </p>
       ) : null}
