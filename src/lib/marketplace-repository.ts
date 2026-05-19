@@ -159,22 +159,26 @@ async function queryProducts(ids?: string[]) {
   )
 }
 
+function mergeProductsWithSamples(products: ApprovedProduct[], ids: string[]) {
+  const productsById = new Map(products.map((product) => [product.id, product]))
+
+  for (const product of sampleApprovedProducts) {
+    if (ids.includes(product.id) && !productsById.has(product.id)) {
+      productsById.set(product.id, product)
+    }
+  }
+
+  return ids.flatMap((id) => {
+    const product = productsById.get(id)
+    return product ? [product] : []
+  })
+}
+
 export async function getProducts(ids?: string[]) {
   try {
     const products = await queryProducts(ids)
     if (ids?.length) {
-      const productsById = new Map(products.map((product) => [product.id, product]))
-
-      for (const product of sampleApprovedProducts) {
-        if (ids.includes(product.id) && !productsById.has(product.id)) {
-          productsById.set(product.id, product)
-        }
-      }
-
-      return ids.flatMap((id) => {
-        const product = productsById.get(id)
-        return product ? [product] : []
-      })
+      return mergeProductsWithSamples(products, ids)
     }
 
     if (products.length || !shouldUseSampleData()) {
@@ -182,6 +186,10 @@ export async function getProducts(ids?: string[]) {
     }
   } catch {
     // Local development can opt into sample fixtures before Supabase is ready.
+  }
+
+  if (ids?.length) {
+    return mergeProductsWithSamples([], ids)
   }
 
   if (!shouldUseSampleData()) {
@@ -196,6 +204,11 @@ export async function getProducts(ids?: string[]) {
 }
 
 export async function getProduct(id: string) {
+  const sampleProduct = sampleApprovedProducts.find((product) => product.id === id)
+  if (sampleProduct) {
+    return sampleProduct
+  }
+
   const products = await getProducts([id])
   return products[0] ?? null
 }

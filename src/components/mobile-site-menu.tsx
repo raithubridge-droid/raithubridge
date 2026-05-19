@@ -13,7 +13,6 @@ import {
   PenLine,
   Search,
   ShoppingCart,
-  UserPlus,
   X,
 } from "lucide-react"
 
@@ -205,16 +204,10 @@ export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteM
                   {signOutSlot}
                 </div>
               ) : (
-                <div className="grid gap-2">
-                  <Link href="/signin" className={drawerLinkClass} onClick={closeMenu}>
-                    <LogIn className="size-5 text-primary" aria-hidden />
-                    Sign In
-                  </Link>
-                  <Link href="/signup" className={drawerLinkClass} onClick={closeMenu}>
-                    <UserPlus className="size-5 text-primary" aria-hidden />
-                    Sign Up
-                  </Link>
-                </div>
+                <Link href="/sign-in" className={drawerLinkClass} onClick={closeMenu}>
+                  <LogIn className="size-5 text-primary" aria-hidden />
+                  Sign In
+                </Link>
               )}
             </div>
           </aside>

@@ -107,14 +107,9 @@ export async function SiteHeader() {
           {isLoggedIn ? (
             <SignOutButton />
           ) : (
-            <>
-              <Button asChild variant="ghost" size="default" className="h-10 px-3 text-base">
-                <Link href="/signin">Sign In</Link>
-              </Button>
-              <Button asChild size="default" className="h-10 rounded-xl px-4 text-base font-semibold">
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </>
+            <Button asChild variant="ghost" size="default" className="h-10 px-3 text-base">
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
           )}
         </nav>
       </div>

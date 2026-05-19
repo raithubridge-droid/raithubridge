@@ -14,7 +14,7 @@ export default async function AdminInventoryPage() {
   const { user, profile } = await getCurrentProfile()
 
   if (!user) {
-    redirect("/signin")
+    redirect("/sign-in")
   }
 
   if (profile?.role !== "admin") {

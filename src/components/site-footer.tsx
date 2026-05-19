@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { Logo } from "@/components/logo"
+import { getCurrentProfile } from "@/lib/auth/roles"
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -52,7 +53,10 @@ const socialLinks = [
   },
 ] as const
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const { profile } = await getCurrentProfile()
+  const isAdmin = profile?.role === "admin"
+
   return (
     <footer className="border-t border-border/80 bg-gradient-to-b from-muted/50 to-muted/70 px-4 py-8 sm:py-10">
       <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-12">
@@ -114,19 +118,16 @@ export function SiteFooter() {
                   Cart
                 </Link>
               </li>
+              {isAdmin ? (
+                <li>
+                  <Link href="/admin" className="hover:text-foreground">
+                    Admin
+                  </Link>
+                </li>
+              ) : null}
               <li>
-                <Link href="/admin" className="hover:text-foreground">
-                  Admin
-                </Link>
-              </li>
-              <li>
-                <Link href="/signin" className="hover:text-foreground">
+                <Link href="/sign-in" className="hover:text-foreground">
                   Sign In
-                </Link>
-              </li>
-              <li>
-                <Link href="/signup" className="hover:text-foreground">
-                  Sign Up
                 </Link>
               </li>
             </ul>

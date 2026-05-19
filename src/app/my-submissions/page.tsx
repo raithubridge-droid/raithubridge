@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 
+import { AuthRequiredCard } from "@/components/auth/auth-required-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getCurrentProfile } from "@/lib/auth/roles"
 import { REVIEW_STATUS_TONE_CLASS } from "@/lib/domain"
 import { getCurrentUserSubmissions } from "@/lib/product-submissions"
 
@@ -15,11 +16,27 @@ export const metadata: Metadata = {
 }
 
 export default async function MySubmissionsPage() {
-  const submissions = await getCurrentUserSubmissions()
+  const { user } = await getCurrentProfile()
 
-  if (!submissions) {
-    redirect("/signin")
+  if (!user) {
+    return (
+      <main className="px-4 py-8 sm:py-12">
+        <div className="mx-auto w-full max-w-2xl">
+          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            My Submissions
+          </h1>
+          <div className="mt-5">
+            <AuthRequiredCard
+              message="Please sign in with your mobile number or Gmail to view your submissions."
+              nextPath="/my-submissions"
+            />
+          </div>
+        </div>
+      </main>
+    )
   }
+
+  const submissions = await getCurrentUserSubmissions()
 
   return (
     <main className="px-4 py-14 sm:py-20">
@@ -39,7 +56,7 @@ export default async function MySubmissionsPage() {
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          {submissions.map((item) => (
+          {(submissions ?? []).map((item) => (
             <Card key={item.id} className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
               <CardHeader className="space-y-3 border-b border-border/60">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -104,7 +121,7 @@ export default async function MySubmissionsPage() {
             </Card>
           ))}
         </div>
-        {!submissions.length ? (
+        {!submissions?.length ? (
           <Card className="mt-10 border-border/70 bg-card/95 text-center shadow-md ring-1 ring-primary/5">
             <CardContent className="p-8">
               <p className="text-lg font-semibold text-foreground">No submissions yet.</p>
