@@ -1,11 +1,21 @@
 const INDIA_COUNTRY_CODE = "91"
 
 export function normalizeIndianMobileDigits(value: string) {
-  return value.replace(/\D/g, "").slice(0, 10)
+  let digits = value.replace(/\D/g, "")
+
+  if (digits.startsWith(INDIA_COUNTRY_CODE) && digits.length >= 12) {
+    digits = digits.slice(INDIA_COUNTRY_CODE.length)
+  }
+
+  if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.slice(1)
+  }
+
+  return digits.slice(0, 10)
 }
 
 export function isValidIndianMobileDigits(digits: string) {
-  return /^\d{10}$/.test(digits)
+  return /^[6-9]\d{9}$/.test(digits)
 }
 
 export function toIndianE164(digits: string) {

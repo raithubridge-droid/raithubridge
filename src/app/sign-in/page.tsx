@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { SignInPageClient } from "@/components/auth/sign-in-page-client"
+import { getSafeNextPath } from "@/lib/auth/redirect"
 
 export const metadata: Metadata = {
   title: "Sign in to RaithuBridge",
@@ -12,10 +13,6 @@ type SignInPageProps = {
     next?: string
     error?: string
   }>
-}
-
-function getSafeNextPath(next?: string) {
-  return next?.startsWith("/") && !next.startsWith("//") ? next : "/"
 }
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
