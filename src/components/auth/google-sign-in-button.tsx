@@ -44,7 +44,18 @@ export function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const [message, setMessage] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [oauthDebug, setOauthDebug] = React.useState<{
+    origin: string
+    redirectTo: string
+  } | null>(null)
   const safeNext = getSafeNextPath(nextPath)
+
+  React.useEffect(() => {
+    const origin = window.location.origin
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
+
+    setOauthDebug({ origin, redirectTo })
+  }, [safeNext])
 
   async function handleGoogleSignIn() {
     if (!hasSupabaseEnv()) {
@@ -112,6 +123,17 @@ export function GoogleSignInButton({
         <GoogleIcon className="size-5 shrink-0" />
         {isLoading ? "Redirecting..." : "Continue with Gmail"}
       </Button>
+      {oauthDebug ? (
+        <div className="rounded-xl border border-amber-300/80 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+          <p className="font-semibold">OAuth debug (temporary)</p>
+          <p className="mt-1 break-all">
+            <span className="font-medium">window.location.origin:</span> {oauthDebug.origin}
+          </p>
+          <p className="mt-1 break-all">
+            <span className="font-medium">redirectTo:</span> {oauthDebug.redirectTo}
+          </p>
+        </div>
+      ) : null}
       {message ? (
         <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {message}
