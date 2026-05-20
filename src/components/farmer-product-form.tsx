@@ -229,6 +229,11 @@ export function FarmerProductForm() {
         message?: string
       }
 
+      if (response.status === 401) {
+        setMessage("Please sign in to submit your product.")
+        return
+      }
+
       if (!response.ok) {
         throw new Error(responsePayload.error ?? "Unable to submit product.")
       }

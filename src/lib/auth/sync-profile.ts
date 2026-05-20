@@ -22,7 +22,16 @@ export async function syncProfileFromUser(
   supabase: SupabaseClient<Database>,
   user: User
 ) {
-  const profile = getProfileFieldsFromUser(user)
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle()
+
+  const profile = {
+    ...getProfileFieldsFromUser(user),
+    role: existing?.role ?? "user",
+  }
 
   const { error } = await supabase.from("profiles").upsert(profile, {
     onConflict: "id",
