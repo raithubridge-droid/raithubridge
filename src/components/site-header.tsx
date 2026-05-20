@@ -10,6 +10,7 @@ import {
   MobileSiteMenu,
 } from "@/components/mobile-site-menu"
 import { Button } from "@/components/ui/button"
+import { getAccountDisplayLabel } from "@/lib/auth/account"
 import { getCurrentProfile } from "@/lib/auth/roles"
 
 const navLinkClass =
@@ -21,6 +22,7 @@ export async function SiteHeader() {
   const { user, profile } = await getCurrentProfile()
   const isLoggedIn = Boolean(user)
   const isAdmin = profile?.role === "admin"
+  const accountLabel = getAccountDisplayLabel(user, profile)
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 shadow-sm backdrop-blur-md">
@@ -55,6 +57,7 @@ export async function SiteHeader() {
             <MobileSiteMenu
               isLoggedIn={isLoggedIn}
               isAdmin={isAdmin}
+              accountLabel={accountLabel}
               signOutSlot={
                 <SignOutButton
                   formClassName="w-full"

@@ -8,11 +8,13 @@ import {
   Home,
   LayoutDashboard,
   LogIn,
+  LogOut,
   Menu,
   PackageSearch,
   PenLine,
   Search,
   ShoppingCart,
+  User,
   X,
 } from "lucide-react"
 
@@ -23,6 +25,7 @@ import { cn } from "@/lib/utils"
 type MobileSiteMenuProps = {
   isLoggedIn: boolean
   isAdmin: boolean
+  accountLabel?: string | null
   signOutSlot?: React.ReactNode
 }
 
@@ -101,7 +104,12 @@ export function MobileHomeQuickLinks() {
   )
 }
 
-export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteMenuProps) {
+export function MobileSiteMenu({
+  isLoggedIn,
+  isAdmin,
+  accountLabel,
+  signOutSlot,
+}: MobileSiteMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false)
 
   React.useEffect(() => {
@@ -167,7 +175,32 @@ export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteM
               </Button>
             </div>
 
-            <nav className="mt-3 space-y-2" aria-label="Mobile">
+            {isLoggedIn && accountLabel ? (
+              <section
+                className="mt-3 rounded-2xl border border-green-800/15 bg-green-800/5 px-3 py-2.5 ring-1 ring-green-800/10"
+                aria-label="Account"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-green-900/70">
+                  Signed in as
+                </p>
+                <p className="mt-0.5 break-all text-sm font-semibold text-foreground">{accountLabel}</p>
+              </section>
+            ) : null}
+
+            {isLoggedIn ? (
+              <nav className="mt-3 space-y-2" aria-label="Account">
+                <Link href="/account" className={drawerLinkClass} onClick={closeMenu}>
+                  <User className="size-5 text-primary" aria-hidden />
+                  Account
+                </Link>
+                <Link href="/my-submissions" className={drawerLinkClass} onClick={closeMenu}>
+                  <ClipboardList className="size-5 text-primary" aria-hidden />
+                  My Submissions
+                </Link>
+              </nav>
+            ) : null}
+
+            <nav className={cn("space-y-2", isLoggedIn ? "mt-3" : "mt-3")} aria-label="Mobile">
               <Link href="/" className={drawerLinkClass} onClick={closeMenu}>
                 <Home className="size-5 text-primary" aria-hidden />
                 Home
@@ -180,12 +213,6 @@ export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteM
                 <PenLine className="size-5 text-primary" aria-hidden />
                 Submit Product
               </Link>
-              {isLoggedIn ? (
-                <Link href="/my-submissions" className={drawerLinkClass} onClick={closeMenu}>
-                  <ClipboardList className="size-5 text-primary" aria-hidden />
-                  My Submissions
-                </Link>
-              ) : null}
               {isAdmin ? (
                 <Link href="/admin" className={drawerLinkClass} onClick={closeMenu}>
                   <LayoutDashboard className="size-5 text-primary" aria-hidden />
@@ -198,10 +225,15 @@ export function MobileSiteMenu({ isLoggedIn, isAdmin, signOutSlot }: MobileSiteM
               {isLoggedIn ? (
                 <div
                   className={cn(
-                    "[&_button]:min-h-12 [&_button]:w-full [&_button]:justify-start [&_button]:rounded-xl [&_button]:border [&_button]:border-border/70 [&_button]:bg-card/90 [&_button]:px-4 [&_button]:text-base [&_button]:font-semibold [&_button]:shadow-sm"
+                    "[&_button]:min-h-12 [&_button]:w-full [&_button]:justify-start [&_button]:gap-3 [&_button]:rounded-xl [&_button]:border [&_button]:border-border/70 [&_button]:bg-card/90 [&_button]:px-4 [&_button]:text-base [&_button]:font-semibold [&_button]:shadow-sm"
                   )}
                 >
-                  {signOutSlot}
+                  {signOutSlot ?? (
+                    <p className="flex min-h-12 items-center gap-3 px-1 text-sm text-muted-foreground">
+                      <LogOut className="size-5" aria-hidden />
+                      Sign Out
+                    </p>
+                  )}
                 </div>
               ) : (
                 <Link href="/sign-in" className={drawerLinkClass} onClick={closeMenu}>

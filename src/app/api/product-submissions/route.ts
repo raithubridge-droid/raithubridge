@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from "next/server"
 import { DB_REVIEW_STATUS } from "@/lib/domain"
 import { SUPABASE_ENV_MESSAGE, hasSupabaseEnv } from "@/lib/supabase/env"
 import { createClient } from "@/lib/supabase/server"
+import type { Database } from "@/types/database"
+
+type ProductInsert = Database["public"]["Tables"]["products"]["Insert"]
 
 const PRODUCT_MEDIA_BUCKET = "product-media"
 const MAX_PHOTOS = 6
@@ -201,32 +204,32 @@ export async function POST(request: NextRequest) {
     const sellerLocation = [sellerVillageCity, sellerDistrict, sellerState].filter(Boolean).join(", ")
     const productId = crypto.randomUUID()
 
+    const productInsert: ProductInsert = {
+      id: productId,
+      seller_id: user.id,
+      seller_name: sellerName,
+      seller_phone: sellerPhone,
+      seller_village_city: sellerVillageCity,
+      seller_district: sellerDistrict,
+      seller_state: sellerState,
+      name: productName,
+      category_id: existingCategory.id,
+      description,
+      price,
+      unit,
+      quantity_available: quantity,
+      status: DB_REVIEW_STATUS.pendingReview,
+      review_status: DB_REVIEW_STATUS.pendingReview,
+      availability_status: "Active",
+      is_active: true,
+      slug: productSlug,
+      seller_location: sellerLocation,
+      unit_size: unit,
+    }
+
     const { data: product, error: productError } = await supabase
       .from("products")
-      .insert({
-        id: productId,
-        category_id: existingCategory.id,
-        description,
-        delivery_info: "Seller will confirm pickup or delivery details after admin review.",
-        is_active: false,
-        name: productName,
-        price,
-        quantity_available: quantity,
-        review_status: DB_REVIEW_STATUS.pendingReview,
-        availability_status: "Inactive",
-        seller_id: user.id,
-        seller_info: "Seller contact details are available to admins for review.",
-        seller_location: sellerLocation,
-        seller_name: sellerName,
-        seller_phone: sellerPhone,
-        slug: productSlug,
-        status: DB_REVIEW_STATUS.pendingReview,
-        unit,
-        unit_size: unit,
-        seller_village_city: sellerVillageCity,
-        seller_district: sellerDistrict,
-        seller_state: sellerState,
-      })
+      .insert(productInsert)
       .select("id, status, review_status, availability_status")
       .single()
 

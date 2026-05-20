@@ -163,3 +163,33 @@ export async function getAdminSubmissions() {
     )
   )
 }
+
+export async function getAdminSubmissionById(productId: string) {
+  const supabase = await createClient()
+  const { data: product, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", productId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (!product) {
+    return null
+  }
+
+  const categories = await getCategoryNames(
+    product.category_id ? [product.category_id] : []
+  )
+  const mediaByProductId = await getMediaByProductId([product.id])
+
+  return mapProductToSubmission(
+    product,
+    product.category_id
+      ? categories.get(product.category_id) ?? "Farm products"
+      : "Farm products",
+    mediaByProductId.get(product.id) ?? []
+  )
+}

@@ -2,21 +2,23 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
-import { AdminReviewPanel } from "@/components/admin-review-panel"
+import { AdminSubmissionsList } from "@/components/admin-submissions-list"
 import { Button } from "@/components/ui/button"
 import { getCurrentProfile } from "@/lib/auth/roles"
 import { getAdminSubmissions } from "@/lib/product-submissions"
 
 export const metadata: Metadata = {
-  title: "Admin",
-  description: "Review submitted products and manage visible user comments.",
+  title: "Review Products",
+  description: "Review submitted farm products.",
 }
+
+export const dynamic = "force-dynamic"
 
 export default async function AdminPage() {
   const { user, profile } = await getCurrentProfile()
 
   if (!user) {
-    redirect("/sign-in")
+    redirect("/sign-in?next=/admin")
   }
 
   if (profile?.role !== "admin") {
@@ -26,25 +28,23 @@ export default async function AdminPage() {
   const submissions = await getAdminSubmissions()
 
   return (
-    <main className="px-4 py-14 sm:py-20">
-      <div className="mx-auto w-full max-w-5xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
-              Admin Dashboard
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Review submitted products, update status, and leave comments that are visible
-              to the user.
-            </p>
-          </div>
-          <Button asChild variant="outline" className="h-11 rounded-xl px-5 text-base font-semibold">
-            <Link href="/admin/inventory">View Inventory</Link>
+    <main className="px-4 py-4">
+      <div className="mx-auto w-full max-w-3xl space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            Review Products
+          </h1>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold"
+          >
+            <Link href="/admin/inventory">Inventory</Link>
           </Button>
         </div>
-        <div className="mt-12">
-          <AdminReviewPanel items={submissions} />
-        </div>
+
+        <AdminSubmissionsList items={submissions} />
       </div>
     </main>
   )

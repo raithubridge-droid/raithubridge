@@ -48,11 +48,12 @@ export const AVAILABILITY_STATUS_TONE_CLASS: Record<ProductAvailabilityStatus, s
   "Sold Out": "bg-red-100 text-red-900 border-red-200",
 }
 
+/** Values accepted by the live products.review_status check constraint. */
 export const DB_REVIEW_STATUS = {
-  pendingReview: "pending_review",
-  onHold: "on_hold",
-  approved: "approved",
-  rejected: "rejected",
+  pendingReview: "Pending Review",
+  onHold: "On Hold",
+  approved: "Approved",
+  rejected: "Rejected",
 } as const
 
 export type DbReviewStatus = (typeof DB_REVIEW_STATUS)[keyof typeof DB_REVIEW_STATUS]
@@ -84,6 +85,19 @@ const REVIEW_STATUS_TO_DB: Record<ProductReviewStatus, DbReviewStatus> = {
 
 export function toDbReviewStatus(value: ProductReviewStatus): DbReviewStatus {
   return REVIEW_STATUS_TO_DB[value]
+}
+
+export function getAdminReviewUpdate(status: ProductReviewStatus, adminComment: string) {
+  const dbStatus = toDbReviewStatus(status)
+  const isApproved = status === "Approved"
+
+  return {
+    admin_comment: adminComment,
+    review_status: dbStatus,
+    status: dbStatus,
+    is_active: isApproved,
+    availability_status: isApproved ? ("Active" as const) : ("Inactive" as const),
+  }
 }
 
 const AVAILABILITY_STATUS_ALIASES: Record<string, ProductAvailabilityStatus> = {

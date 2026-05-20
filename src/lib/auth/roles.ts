@@ -9,6 +9,7 @@ export { ROLE_HOME, ROLE_LABELS, type UserRole }
 export type AuthProfile = {
   id: string
   email: string | null
+  phone: string | null
   full_name: string | null
   role: UserRole
 }
@@ -29,7 +30,7 @@ export async function getCurrentProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, email, full_name, role")
+    .select("id, email, phone, full_name, role")
     .eq("id", user.id)
     .maybeSingle()
 
@@ -53,11 +54,22 @@ export async function getCurrentProfile() {
 
   const { data: createdProfile } = await supabase
     .from("profiles")
-    .upsert(fallbackProfile)
-    .select("id, email, full_name, role")
+    .upsert(fallbackProfile, { onConflict: "id" })
+    .select("id, email, phone, full_name, role")
     .single()
 
-  return { user, profile: createdProfile ?? fallbackProfile }
+  return {
+    user,
+    profile:
+      createdProfile ??
+      ({
+        id: fallbackProfile.id,
+        email: fallbackProfile.email,
+        phone: fallbackProfile.phone,
+        full_name: fallbackProfile.full_name,
+        role: "user" as const,
+      } satisfies AuthProfile),
+  }
 }
 
 export async function requireRole(allowedRoles: UserRole[]) {

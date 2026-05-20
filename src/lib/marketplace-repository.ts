@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import {
+  DB_REVIEW_STATUS,
   normalizeAvailabilityStatus,
   normalizeReviewStatus,
   type ProductAvailabilityStatus,
@@ -104,9 +105,7 @@ async function queryProducts(ids?: string[]) {
     .from("products")
     .select("*")
     .eq("is_active", true)
-    .or(
-      "review_status.eq.approved,review_status.eq.Approved,status.in.(approved,Approved,available,limited,seasonal)"
-    )
+    .eq("review_status", DB_REVIEW_STATUS.approved)
     .eq("availability_status", "Active")
     .order("created_at", { ascending: false })
 
