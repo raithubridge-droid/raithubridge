@@ -476,6 +476,10 @@ export function FarmerProductForm() {
             onChange={handlePhotoChange}
           />
           <PhotoPreviewList photos={photos} onClear={clearPhotos} />
+          <p className="text-sm text-muted-foreground">
+            Photos help buyers trust your product. You can submit without photos, but admin may ask
+            for better photos.
+          </p>
         </div>
       </section>
 

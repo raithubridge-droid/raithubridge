@@ -283,10 +283,38 @@ create table if not exists public.product_media (
   name text not null,
   size_bytes integer not null default 0,
   sort_order integer not null default 0,
+  is_public boolean not null default false,
+  is_primary boolean not null default false,
+  uploaded_by text not null default 'farmer' check (uploaded_by in ('farmer', 'admin')),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'ignored')),
   created_at timestamptz not null default now()
 );
 
+alter table public.product_media add column if not exists is_public boolean not null default false;
+alter table public.product_media add column if not exists is_primary boolean not null default false;
+alter table public.product_media add column if not exists uploaded_by text not null default 'farmer';
+alter table public.product_media add column if not exists status text not null default 'pending';
+
+alter table public.product_media drop constraint if exists product_media_uploaded_by_check;
+alter table public.product_media add constraint product_media_uploaded_by_check
+  check (uploaded_by in ('farmer', 'admin'));
+
+alter table public.product_media drop constraint if exists product_media_status_check;
+alter table public.product_media add constraint product_media_status_check
+  check (status in ('pending', 'approved', 'ignored'));
+
+update public.product_media pm
+set
+  is_public = true,
+  status = 'approved',
+  is_primary = pm.sort_order = 0
+from public.products p
+where p.id = pm.product_id
+  and p.review_status in ('Approved', 'approved')
+  and pm.status is distinct from 'ignored';
+
 create index if not exists product_media_product_idx on public.product_media (product_id, sort_order);
+create index if not exists product_media_public_idx on public.product_media (product_id, is_public, status, is_primary);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -550,14 +578,34 @@ with check (public.current_user_role() = 'admin');
 drop policy if exists "product_media_public_read_approved_product" on public.product_media;
 drop policy if exists "product_media_submitter_or_admin_write" on public.product_media;
 
-create policy "product_media_public_read_approved_product"
-on public.product_media for select to anon, authenticated
+drop policy if exists "product_media_submitter_read_own" on public.product_media;
+
+create policy "product_media_submitter_read_own"
+on public.product_media for select to authenticated
 using (
   exists (
     select 1 from public.products p
     where p.id = product_id
+      and p.seller_id = auth.uid()
+  )
+);
+
+drop policy if exists "product_media_admin_read_all" on public.product_media;
+
+create policy "product_media_admin_read_all"
+on public.product_media for select to authenticated
+using (public.current_user_role() = 'admin');
+
+create policy "product_media_public_read_approved_product"
+on public.product_media for select to anon, authenticated
+using (
+  is_public = true
+  and status = 'approved'
+  and exists (
+    select 1 from public.products p
+    where p.id = product_id
       and p.is_active = true
-      and p.review_status = 'Approved'
+      and p.review_status in ('Approved', 'approved')
       and p.availability_status = 'Active'
   )
 );

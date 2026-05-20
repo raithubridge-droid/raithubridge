@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import * as React from "react"
@@ -6,6 +5,7 @@ import Link from "next/link"
 import { Minus, Plus } from "lucide-react"
 
 import { useCart } from "@/components/cart/cart-provider"
+import { ProductImage } from "@/components/product-image"
 import { Button } from "@/components/ui/button"
 import { APPROVED_PRODUCTS, type ApprovedProduct } from "@/lib/marketplace-data"
 import { sampleApprovedProducts } from "@/lib/sample-products"
@@ -192,20 +192,15 @@ export function CartPageClient({ isSignedIn }: { isSignedIn: boolean }) {
                 >
                   <Link
                     href={`/products/${product.id}`}
-                    className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted"
+                    className="block h-20 w-20 shrink-0 overflow-hidden rounded-xl"
                     aria-label={`View ${product.name}`}
                   >
-                    {product.mediaAssets[0]?.type === "image" ? (
-                      <img
-                        src={product.mediaAssets[0].url}
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center px-2 text-center text-[0.65rem] font-semibold text-muted-foreground">
-                        Product
-                      </span>
-                    )}
+                    <ProductImage
+                      category={product.category}
+                      mediaAssets={product.mediaAssets}
+                      alt={product.name}
+                      className="h-20 w-20"
+                    />
                   </Link>
 
                   <div className="min-w-0 flex-1">

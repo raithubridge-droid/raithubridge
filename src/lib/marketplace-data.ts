@@ -27,12 +27,17 @@ export type ApprovedProduct = {
 }
 
 export type ProductMediaAsset = {
+  id?: string
   url: string
   path: string
   type: "image" | "video"
   mimeType: string
   name: string
   size: number
+  isPublic?: boolean
+  isPrimary?: boolean
+  uploadedBy?: "farmer" | "admin"
+  status?: "pending" | "approved" | "ignored"
 }
 
 export type SubmissionStatus = ProductReviewStatus
@@ -69,6 +74,7 @@ export type InventoryItem = {
   location: string
   stockCount: number
   inStock: boolean
+  mediaAssets?: ProductMediaAsset[]
 }
 
 export const DISCOVERY_LISTINGS: DiscoveryListing[] = [

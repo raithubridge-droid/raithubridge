@@ -67,6 +67,10 @@ type MediaRowInsert = {
   name: string
   size_bytes: number
   sort_order: number
+  is_public: boolean
+  is_primary: boolean
+  uploaded_by: "farmer"
+  status: "pending"
 }
 
 async function uploadProductPhotos(input: {
@@ -98,16 +102,20 @@ async function uploadProductPhotos(input: {
       .from(PRODUCT_MEDIA_BUCKET)
       .getPublicUrl(storagePath)
 
-    mediaRows.push({
-      product_id: input.productId,
-      url: publicUrlData.publicUrl,
-      storage_path: storagePath,
-      media_type: "image",
-      mime_type: photo.type,
-      name: photo.name,
-      size_bytes: photo.size,
-      sort_order: index,
-    })
+        mediaRows.push({
+          product_id: input.productId,
+          url: publicUrlData.publicUrl,
+          storage_path: storagePath,
+          media_type: "image",
+          mime_type: photo.type,
+          name: photo.name,
+          size_bytes: photo.size,
+          sort_order: index,
+          is_public: false,
+          is_primary: index === 0,
+          uploaded_by: "farmer",
+          status: "pending",
+        })
   }
 
   return { mediaRows, uploadedPaths }

@@ -5,6 +5,10 @@ import {
   PRODUCT_REVIEW_STATUSES,
   type ProductReviewStatus,
 } from "@/lib/domain"
+import {
+  publishApprovedMediaForProduct,
+  unpublishAllMediaForProduct,
+} from "@/lib/product-media"
 import { createClient } from "@/lib/supabase/server"
 
 type AdminSubmissionRouteContext = {
@@ -64,6 +68,12 @@ export async function PATCH(request: NextRequest, { params }: AdminSubmissionRou
 
     if (error || !data) {
       throw new Error(error?.message ?? "Unable to update submission.")
+    }
+
+    if (body.status === "Approved") {
+      await publishApprovedMediaForProduct(auth.supabase, productId)
+    } else {
+      await unpublishAllMediaForProduct(auth.supabase, productId)
     }
 
     return NextResponse.json({ product: data })

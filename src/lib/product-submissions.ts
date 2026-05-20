@@ -1,5 +1,6 @@
-import type { PendingSubmission, ProductMediaAsset } from "@/lib/marketplace-data"
+import type { PendingSubmission } from "@/lib/marketplace-data"
 import { normalizeReviewStatus } from "@/lib/domain"
+import { mapMediaRowToAsset } from "@/lib/product-media"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/types/database"
 
@@ -23,15 +24,8 @@ function formatPrice(price: number, unit: string) {
   return `Rs. ${price.toLocaleString("en-IN")} / ${unit}`
 }
 
-function mapMedia(row: MediaRow): ProductMediaAsset {
-  return {
-    url: row.url,
-    path: row.storage_path ?? row.id,
-    type: row.media_type,
-    mimeType: row.mime_type ?? "",
-    name: row.name,
-    size: row.size_bytes,
-  }
+function mapMedia(row: MediaRow) {
+  return mapMediaRowToAsset(row)
 }
 
 function mapProductToSubmission(

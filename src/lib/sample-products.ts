@@ -141,10 +141,13 @@ export function mapSampleProductToApprovedProduct(product: SampleProduct): Appro
     mediaAssets: product.images.map((url, index) => ({
       url,
       path: `${product.id}-${index + 1}`,
-      type: "image",
+      type: "image" as const,
       mimeType: "image/jpeg",
       name: `${product.name} image ${index + 1}`,
       size: 0,
+      isPublic: true,
+      isPrimary: index === 0,
+      status: "approved" as const,
     })),
   }
 }
