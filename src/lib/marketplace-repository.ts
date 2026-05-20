@@ -5,6 +5,7 @@ import {
   normalizeReviewStatus,
   type ProductAvailabilityStatus,
 } from "@/lib/domain"
+import { getManageableImages, getPublicDisplayImages, mapMediaRowToAsset } from "@/lib/product-media"
 import {
   APPROVED_PRODUCTS,
   INVENTORY_ITEMS,
@@ -63,14 +64,7 @@ function formatPrice(price: number, unit: string) {
 }
 
 function mapMedia(row: MediaRow): ProductMediaAsset {
-  return {
-    url: row.url,
-    path: row.storage_path ?? row.id,
-    type: row.media_type,
-    mimeType: row.mime_type ?? "",
-    name: row.name,
-    size: row.size_bytes,
-  }
+  return mapMediaRowToAsset(row)
 }
 
 function mapProduct(
@@ -95,7 +89,7 @@ function mapProduct(
     description: row.description,
     deliveryInfo: row.delivery_info ?? "Delivery details will be confirmed during checkout.",
     sellerInfo: getMarketplaceSellerInfo(row.seller_info),
-    mediaAssets: mediaRows.map(mapMedia),
+    mediaAssets: getPublicDisplayImages(mediaRows.map(mapMedia)),
   }
 }
 
@@ -260,17 +254,25 @@ async function queryInventoryItems() {
     .map((product) => product.category_id)
     .filter((id): id is string => Boolean(id))
 
-  const [{ data: categories }, { data: inventory }] = await Promise.all([
+  const [{ data: categories }, { data: inventory }, { data: media }] = await Promise.all([
     categoryIds.length
       ? supabase.from("categories").select("id, name").in("id", categoryIds)
       : Promise.resolve({ data: [] as Pick<CategoryRow, "id" | "name">[] }),
     supabase.from("inventory").select("*").in("product_id", productIds),
+    supabase.from("product_media").select("*").in("product_id", productIds),
   ])
 
   const categoriesById = new Map((categories ?? []).map((category) => [category.id, category.name]))
   const inventoryByProductId = new Map(
     (inventory ?? []).map((item) => [item.product_id, item])
   )
+  const mediaByProductId = new Map<string, MediaRow[]>()
+
+  for (const row of media ?? []) {
+    const existing = mediaByProductId.get(row.product_id) ?? []
+    existing.push(row)
+    mediaByProductId.set(row.product_id, existing)
+  }
 
   return products.map<InventoryItem>((product) => {
     const inventoryItem = inventoryByProductId.get(product.id)
@@ -290,6 +292,9 @@ async function queryInventoryItems() {
       location: product.seller_location,
       stockCount,
       inStock: inventoryItem?.in_stock ?? stockCount > 0,
+      mediaAssets: getManageableImages(
+        (mediaByProductId.get(product.id) ?? []).map(mapMedia)
+      ),
     }
   })
 }

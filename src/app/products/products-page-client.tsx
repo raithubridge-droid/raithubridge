@@ -2,10 +2,12 @@
 
 import * as React from "react"
 
+import { ApprovedProductCard } from "@/components/approved-product-card"
 import { SampleProductCard } from "@/components/sample-product-card"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ApprovedProduct } from "@/lib/marketplace-data"
 import {
+  mapSampleProductToApprovedProduct,
   sampleProducts,
   type SampleProductCategory,
 } from "@/lib/sample-products"
@@ -56,8 +58,11 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
     }
   }, [])
 
-  void products
-  const displayProducts = sampleProducts
+  const usingSamples = !products.length
+  const displayProducts = usingSamples
+    ? sampleProducts.map(mapSampleProductToApprovedProduct)
+    : products
+
   const filteredProducts =
     activeTab === "All"
       ? displayProducts
@@ -99,7 +104,7 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
           </Card>
         ) : null}
 
-        {!isLoading && !products.length ? (
+        {!isLoading && usingSamples ? (
           <Card className="mt-5 border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
             <CardContent className="p-5 text-center">
               <p className="text-lg font-semibold text-foreground">Showing sample products</p>
@@ -111,9 +116,16 @@ export function ProductsPageClient({ initialProducts }: { initialProducts: Appro
         ) : null}
 
         <div className="grid grid-cols-2 gap-4 pt-1 sm:grid-cols-3 lg:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <SampleProductCard key={product.id} product={product} />
-          ))}
+          {filteredProducts.map((product) =>
+            usingSamples ? (
+              <SampleProductCard
+                key={product.id}
+                product={sampleProducts.find((sample) => sample.id === product.id)!}
+              />
+            ) : (
+              <ApprovedProductCard key={product.id} product={product} />
+            )
+          )}
         </div>
       </div>
     </main>

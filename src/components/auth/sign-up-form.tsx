@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getAuthCallbackRedirectTo } from "@/lib/auth/redirect"
 import { createClient } from "@/lib/supabase/client"
 import { hasSupabaseEnv, SUPABASE_ENV_MESSAGE } from "@/lib/supabase/env"
 
@@ -42,6 +43,13 @@ export function SignUpForm() {
     setMessage(null)
 
     try {
+      const emailRedirectTo = getAuthCallbackRedirectTo("/products")
+
+      if (!emailRedirectTo) {
+        setMessage("Unable to build confirmation redirect URL.")
+        return
+      }
+
       const supabase = createClient()
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -50,7 +58,7 @@ export function SignUpForm() {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/products`,
+          emailRedirectTo,
         },
       })
 

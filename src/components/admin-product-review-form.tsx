@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import * as React from "react"
@@ -9,6 +8,7 @@ import { ArrowLeft, CalendarDays, MapPin, Phone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { AdminProductMediaSection } from "@/components/admin-product-media-section"
 import { REVIEW_STATUS_TONE_CLASS, type ProductReviewStatus } from "@/lib/domain"
 import type { PendingSubmission } from "@/lib/marketplace-data"
 
@@ -58,7 +58,6 @@ export function AdminProductReviewForm({ submission }: { submission: PendingSubm
     }
   }
 
-  const photos = submission.mediaAssets?.filter((asset) => asset.type === "image") ?? []
   const location = formatLocation(submission)
   const hasExistingComment =
     submission.adminComment && submission.adminComment !== EMPTY_COMMENT
@@ -89,30 +88,11 @@ export function AdminProductReviewForm({ submission }: { submission: PendingSubm
         </p>
       </section>
 
-      {photos.length ? (
-        <section className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-sm">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Product photos
-          </h2>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {photos.map((asset) => (
-              <a
-                key={asset.path}
-                href={asset.url}
-                target="_blank"
-                rel="noreferrer"
-                className="overflow-hidden rounded-xl border border-border/70 bg-muted"
-              >
-                <img
-                  src={asset.url}
-                  alt={asset.name}
-                  className="aspect-[4/3] w-full object-cover"
-                />
-              </a>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <AdminProductMediaSection
+        productId={submission.id}
+        category={submission.category}
+        mediaAssets={submission.mediaAssets}
+      />
 
       <section className="space-y-3 rounded-2xl border border-border/70 bg-card/95 p-4 shadow-sm">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Product</h2>

@@ -201,6 +201,10 @@ export type Database = {
           name: string
           size_bytes: number
           sort_order: number
+          is_public: boolean
+          is_primary: boolean
+          uploaded_by: "farmer" | "admin"
+          status: "pending" | "approved" | "ignored"
           created_at: string
         }
         Insert: {
@@ -213,6 +217,10 @@ export type Database = {
           name: string
           size_bytes?: number
           sort_order?: number
+          is_public?: boolean
+          is_primary?: boolean
+          uploaded_by?: "farmer" | "admin"
+          status?: "pending" | "approved" | "ignored"
           created_at?: string
         }
         Update: {
@@ -225,6 +233,10 @@ export type Database = {
           name?: string
           size_bytes?: number
           sort_order?: number
+          is_public?: boolean
+          is_primary?: boolean
+          uploaded_by?: "farmer" | "admin"
+          status?: "pending" | "approved" | "ignored"
           created_at?: string
         }
         Relationships: []

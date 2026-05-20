@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
+import { getSafeNextPath } from "@/lib/auth/redirect"
 import { createClient } from "@/lib/supabase/client"
 import { hasSupabaseEnv, SUPABASE_ENV_MESSAGE } from "@/lib/supabase/env"
 import { cn } from "@/lib/utils"
@@ -11,10 +12,6 @@ type GoogleSignInButtonProps = {
   nextPath?: string
   className?: string
   disabled?: boolean
-}
-
-function getSafeNextPath(nextPath: string) {
-  return nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/"
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -41,7 +38,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export function GoogleSignInButton({
-  nextPath = "/",
+  nextPath,
   className,
   disabled = false,
 }: GoogleSignInButtonProps) {
@@ -59,8 +56,16 @@ export function GoogleSignInButton({
     setMessage(null)
 
     try {
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
+          : undefined
+
+      if (!redirectTo) {
+        throw new Error("Google sign-in must be started from the browser.")
+      }
+
       const supabase = createClient()
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

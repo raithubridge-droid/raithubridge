@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { syncProfileFromUser } from "@/lib/auth/sync-profile"
+import { getFriendlyOtpError } from "@/lib/auth/otp-errors"
 import {
   isValidIndianMobileDigits,
   isValidOtpCode,
@@ -25,29 +25,6 @@ function getSafeNextPath(nextPath: string) {
   return nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/"
 }
 
-function getFriendlyOtpError(error: unknown) {
-  const message = error instanceof Error ? error.message : ""
-  const normalized = message.toLowerCase()
-
-  if (normalized.includes("invalid login") || normalized.includes("invalid otp")) {
-    return "Invalid OTP. Check the code and try again."
-  }
-
-  if (normalized.includes("expired")) {
-    return "This OTP has expired. Send a new code."
-  }
-
-  if (normalized.includes("rate limit") || normalized.includes("too many")) {
-    return "Too many attempts. Please wait a few minutes and try again."
-  }
-
-  if (normalized.includes("phone")) {
-    return "Unable to send OTP to this number. Check the number and try again."
-  }
-
-  return message || "Something went wrong. Please try again."
-}
-
 export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) {
   const router = useRouter()
   const safeNext = getSafeNextPath(nextPath)
@@ -59,10 +36,6 @@ export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) 
   const [isSendingOtp, setIsSendingOtp] = React.useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false)
 
-  const fullPhoneNumber = isValidIndianMobileDigits(mobileDigits)
-    ? toIndianE164(mobileDigits)
-    : null
-
   async function handleSendOtp() {
     if (!hasSupabaseEnv()) {
       setMessage(SUPABASE_ENV_MESSAGE)
@@ -70,7 +43,7 @@ export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) 
     }
 
     if (!isValidIndianMobileDigits(mobileDigits)) {
-      setMessage("Enter a valid 10-digit mobile number.")
+      setMessage("Enter a valid 10-digit Indian mobile number.")
       return
     }
 
@@ -81,6 +54,10 @@ export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) 
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithOtp({
         phone: toIndianE164(mobileDigits),
+        options: {
+          channel: "sms",
+          shouldCreateUser: true,
+        },
       })
 
       if (error) {
@@ -105,8 +82,8 @@ export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) 
       return
     }
 
-    if (!fullPhoneNumber) {
-      setMessage("Enter a valid 10-digit mobile number.")
+    if (!isValidIndianMobileDigits(mobileDigits)) {
+      setMessage("Enter a valid 10-digit Indian mobile number.")
       return
     }
 
@@ -119,19 +96,21 @@ export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) 
     setMessage(null)
 
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: fullPhoneNumber,
-        token: otp,
-        type: "sms",
+      const response = await fetch("/api/auth/phone/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobileDigits,
+          token: otp,
+        }),
       })
 
-      if (error) {
-        throw error
-      }
+      const payload = (await response.json()) as { error?: string }
 
-      if (data.user) {
-        await syncProfileFromUser(supabase, data.user)
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to verify OTP.")
       }
 
       router.push(safeNext)
@@ -212,7 +191,13 @@ export function PhoneOtpSignInForm({ nextPath = "/" }: PhoneOtpSignInFormProps) 
       ) : null}
 
       {message ? (
-        <p className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
+        <p
+          className={`rounded-xl border px-3 py-2 text-sm ${
+            message.includes("OTP sent")
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-destructive/20 bg-destructive/10 text-destructive"
+          }`}
+        >
           {message}
         </p>
       ) : null}
