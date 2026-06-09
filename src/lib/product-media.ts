@@ -16,15 +16,50 @@ export type ProductMediaRowFields = {
 
 export type CategoryPlaceholderKey = "Grains" | "Oils" | "Spices" | "Vegetables" | "Other"
 
+export const DEFAULT_PRODUCT_PLACEHOLDER_URL = "/images/categories/other.png"
+
+const CATEGORY_PLACEHOLDER_IMAGE_URLS: Record<CategoryPlaceholderKey, string> = {
+  Grains: "/images/categories/grains.jpg",
+  Oils: "/images/categories/other.png",
+  Spices: "/images/categories/spices.png",
+  Vegetables: "/images/categories/vegetables.png",
+  Other: DEFAULT_PRODUCT_PLACEHOLDER_URL,
+}
+
 const PLACEHOLDER_STYLES: Record<
   CategoryPlaceholderKey,
-  { label: string; emoji: string; className: string }
+  { label: string; emoji: string; className: string; imageUrl: string }
 > = {
-  Grains: { label: "Grains", emoji: "🌾", className: "bg-amber-100 text-amber-900" },
-  Oils: { label: "Oils", emoji: "🫒", className: "bg-lime-100 text-lime-900" },
-  Spices: { label: "Spices", emoji: "🌶️", className: "bg-orange-100 text-orange-900" },
-  Vegetables: { label: "Vegetables", emoji: "🥬", className: "bg-emerald-100 text-emerald-900" },
-  Other: { label: "Farm product", emoji: "🌱", className: "bg-stone-100 text-stone-700" },
+  Grains: {
+    label: "Grains",
+    emoji: "🌾",
+    className: "bg-amber-100 text-amber-900",
+    imageUrl: CATEGORY_PLACEHOLDER_IMAGE_URLS.Grains,
+  },
+  Oils: {
+    label: "Oils",
+    emoji: "🫒",
+    className: "bg-lime-100 text-lime-900",
+    imageUrl: CATEGORY_PLACEHOLDER_IMAGE_URLS.Oils,
+  },
+  Spices: {
+    label: "Spices",
+    emoji: "🌶️",
+    className: "bg-orange-100 text-orange-900",
+    imageUrl: CATEGORY_PLACEHOLDER_IMAGE_URLS.Spices,
+  },
+  Vegetables: {
+    label: "Vegetables",
+    emoji: "🥬",
+    className: "bg-emerald-100 text-emerald-900",
+    imageUrl: CATEGORY_PLACEHOLDER_IMAGE_URLS.Vegetables,
+  },
+  Other: {
+    label: "Farm product",
+    emoji: "🌱",
+    className: "bg-stone-100 text-stone-700",
+    imageUrl: CATEGORY_PLACEHOLDER_IMAGE_URLS.Other,
+  },
 }
 
 export function normalizeCategoryPlaceholder(category: string): CategoryPlaceholderKey {
@@ -51,6 +86,42 @@ export function normalizeCategoryPlaceholder(category: string): CategoryPlacehol
 
 export function getCategoryPlaceholder(category: string) {
   return PLACEHOLDER_STYLES[normalizeCategoryPlaceholder(category)]
+}
+
+export function getCategoryPlaceholderImageUrl(category: string) {
+  const normalized = category.trim().toLowerCase()
+
+  if (
+    normalized.includes("pulse") ||
+    normalized.includes("dal") ||
+    normalized.includes("lentil") ||
+    normalized.includes("bean")
+  ) {
+    return "/images/categories/pulses.jpg"
+  }
+
+  if (normalized.includes("fruit")) {
+    return "/images/categories/fruits.jpg"
+  }
+
+  if (
+    normalized.includes("dairy") ||
+    normalized.includes("milk") ||
+    normalized.includes("ghee") ||
+    normalized.includes("curd")
+  ) {
+    return "/images/categories/dairy.jpg"
+  }
+
+  return PLACEHOLDER_STYLES[normalizeCategoryPlaceholder(category)].imageUrl
+}
+
+export function resolveProductImageSrc(
+  category: string,
+  imageUrl?: string | null
+) {
+  const placeholderUrl = getCategoryPlaceholderImageUrl(category)
+  return imageUrl?.trim() ? imageUrl : placeholderUrl
 }
 
 export function mapMediaRowToAsset(
@@ -161,6 +232,18 @@ export function getFarmerUploadedImages(assets: ProductMediaAsset[]) {
   )
 }
 
+export function getFarmerUploadedVideos(assets: ProductMediaAsset[]) {
+  return assets.filter(
+    (asset) => asset.type === "video" && asset.uploadedBy === "farmer" && asset.status !== "ignored"
+  )
+}
+
+export function getFarmerSubmissionMedia(assets: ProductMediaAsset[]) {
+  return assets.filter(
+    (asset) => asset.uploadedBy === "farmer" && asset.status !== "ignored"
+  )
+}
+
 export function getAdminUploadedImages(assets: ProductMediaAsset[]) {
   return assets.filter(
     (asset) => asset.type === "image" && asset.uploadedBy === "admin" && asset.status !== "ignored"
@@ -180,6 +263,49 @@ export async function publishApprovedMediaForProduct(
   if (error) {
     throw new Error(error.message)
   }
+}
+
+export async function approveAllPendingFarmerMediaForProduct(
+  supabase: SupabaseClient<Database>,
+  productId: string
+) {
+  const { error: approveError } = await supabase
+    .from("product_media")
+    .update({ status: "approved" })
+    .eq("product_id", productId)
+    .eq("uploaded_by", "farmer")
+    .eq("status", "pending")
+
+  if (approveError) {
+    throw new Error(approveError.message)
+  }
+
+  const { data: approvedImages, error: readError } = await supabase
+    .from("product_media")
+    .select("id, is_primary")
+    .eq("product_id", productId)
+    .eq("status", "approved")
+    .eq("media_type", "image")
+    .order("sort_order", { ascending: true })
+
+  if (readError) {
+    throw new Error(readError.message)
+  }
+
+  const hasPrimary = approvedImages?.some((image) => image.is_primary)
+
+  if (approvedImages?.length && !hasPrimary) {
+    const { error: primaryError } = await supabase
+      .from("product_media")
+      .update({ is_primary: true })
+      .eq("id", approvedImages[0].id)
+
+    if (primaryError) {
+      throw new Error(primaryError.message)
+    }
+  }
+
+  await publishApprovedMediaForProduct(supabase, productId)
 }
 
 export async function unpublishAllMediaForProduct(

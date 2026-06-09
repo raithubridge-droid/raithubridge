@@ -127,7 +127,7 @@ create table if not exists public.products (
   availability_status text not null default 'Inactive' check (
     availability_status in ('Active', 'Inactive', 'Sold Out')
   ),
-  is_active boolean not null default true,
+  is_active boolean not null default false,
   admin_comment text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

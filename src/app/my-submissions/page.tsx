@@ -1,33 +1,34 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 
 import { AuthRequiredCard } from "@/components/auth/auth-required-card"
-import { ProductImage } from "@/components/product-image"
-import { Badge } from "@/components/ui/badge"
+import { MySubmissionsList } from "@/components/my-submissions-list"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getAccountDisplayLabel } from "@/lib/auth/account"
 import { getCurrentProfile } from "@/lib/auth/roles"
-import { REVIEW_STATUS_TONE_CLASS } from "@/lib/domain"
 import { getCurrentUserSubmissions } from "@/lib/product-submissions"
 
 export const metadata: Metadata = {
   title: "My Submissions",
-  description: "Track product review status and admin comments.",
+  description: "Track your submitted farm products and review status.",
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function MySubmissionsPage() {
-  const { user } = await getCurrentProfile()
+  const { user, profile } = await getCurrentProfile()
 
   if (!user) {
     return (
-      <main className="px-4 py-8 sm:py-12">
-        <div className="mx-auto w-full max-w-2xl">
-          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+      <main className="px-4 py-4 sm:py-8">
+        <div className="mx-auto w-full max-w-md">
+          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
             My Submissions
           </h1>
-          <div className="mt-5">
+          <div className="mt-4">
             <AuthRequiredCard
-              message="Please sign in with your mobile number or Gmail to view your submissions."
+              message="Please sign in to view your product submissions."
               nextPath="/my-submissions"
             />
           </div>
@@ -36,89 +37,51 @@ export default async function MySubmissionsPage() {
     )
   }
 
-  const submissions = await getCurrentUserSubmissions()
+  const submissions = (await getCurrentUserSubmissions()) ?? []
+  const accountLabel = getAccountDisplayLabel(user, profile)
 
   return (
-    <main className="px-4 py-14 sm:py-20">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <main className="px-4 py-4 sm:py-8">
+      <div className="mx-auto w-full max-w-2xl">
+        <Link
+          href="/account"
+          className="inline-flex items-center gap-2 text-sm font-medium text-green-900"
+        >
+          <ArrowLeft className="size-4 shrink-0" aria-hidden />
+          Back to account
+        </Link>
+
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
+            <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
               My Submissions
             </h1>
-            <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-              Track your submitted products, review status, and admin comments.
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+              Products you have submitted for marketplace review.
             </p>
+            {accountLabel ? (
+              <p className="mt-2 break-all text-xs text-muted-foreground">
+                Signed in as {accountLabel}
+              </p>
+            ) : null}
           </div>
-          <Button asChild className="h-11 rounded-xl px-5 text-base font-semibold">
+          <Button
+            asChild
+            className="h-10 shrink-0 rounded-xl px-4 text-sm font-semibold sm:h-11 sm:text-base"
+          >
             <Link href="/submit-product">Submit Product</Link>
           </Button>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          {(submissions ?? []).map((item) => (
-            <Card key={item.id} className="border-border/70 bg-card/95 shadow-md ring-1 ring-primary/5">
-              <CardHeader className="space-y-3 border-b border-border/60">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-2xl">{item.productName}</CardTitle>
-                    <p className="mt-1 text-base text-muted-foreground">
-                      Submitted {item.submittedAt}
-                    </p>
-                  </div>
-                  <Badge className={`border px-3 py-1 text-sm ${REVIEW_STATUS_TONE_CLASS[item.status]}`}>
-                    {item.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-5 pt-5">
-                <ProductImage
-                  category={item.category}
-                  mediaAssets={item.mediaAssets}
-                  alt={item.productName}
-                  includeFarmerUploads
-                  className="aspect-[4/3] h-auto max-h-56 w-full rounded-xl border border-border/70"
-                />
-                <div className="grid gap-4 text-base sm:grid-cols-2">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                      Product
-                    </p>
-                    <p className="mt-1 text-foreground">{item.category}</p>
-                    <p className="text-muted-foreground">
-                      {item.quantityAvailable} {item.unit} · {item.price}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                      Location
-                    </p>
-                    <p className="mt-1 text-foreground">
-                      {item.sellerVillageCity}, {item.sellerDistrict}
-                    </p>
-                    <p className="text-muted-foreground">{item.sellerState}</p>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                    Admin comment
-                  </p>
-                  <p className="mt-2 text-base text-foreground">{item.adminComment}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <p className="mt-4 text-sm text-muted-foreground">
+          {submissions.length
+            ? `${submissions.length} submission${submissions.length === 1 ? "" : "s"}`
+            : null}
+        </p>
+
+        <div className="mt-4">
+          <MySubmissionsList submissions={submissions} />
         </div>
-        {!submissions?.length ? (
-          <Card className="mt-10 border-border/70 bg-card/95 text-center shadow-md ring-1 ring-primary/5">
-            <CardContent className="p-8">
-              <p className="text-lg font-semibold text-foreground">No submissions yet.</p>
-              <p className="mt-2 text-base text-muted-foreground">
-                Submit a product and it will appear here with status and admin comments.
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
       </div>
     </main>
   )

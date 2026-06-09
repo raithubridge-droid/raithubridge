@@ -87,12 +87,15 @@ export function toDbReviewStatus(value: ProductReviewStatus): DbReviewStatus {
   return REVIEW_STATUS_TO_DB[value]
 }
 
-export function getAdminReviewUpdate(status: ProductReviewStatus, adminComment: string) {
+export function getAdminReviewUpdate(
+  status: ProductReviewStatus,
+  adminComment?: string | null
+) {
   const dbStatus = toDbReviewStatus(status)
   const isApproved = status === "Approved"
 
   return {
-    admin_comment: adminComment,
+    ...(adminComment !== undefined ? { admin_comment: adminComment } : {}),
     review_status: dbStatus,
     status: dbStatus,
     is_active: isApproved,
@@ -151,6 +154,26 @@ export function normalizeAvailabilityStatus(
 
 export function isApprovedReviewStatus(value: string | null | undefined) {
   return normalizeReviewStatus(value) === "Approved"
+}
+
+export function canAdminApproveOrReject(status: ProductReviewStatus) {
+  return status === "Pending Review" || status === "On Hold"
+}
+
+export function getReviewActionMessage(status: ProductReviewStatus) {
+  if (status === "Approved") {
+    return "Product approved. It is now visible on the public Products page."
+  }
+
+  if (status === "Rejected") {
+    return "Product rejected. It will not appear on the public Products page."
+  }
+
+  if (status === "On Hold") {
+    return "Product put on hold. The farmer will see your note on My Submissions."
+  }
+
+  return "Review saved successfully."
 }
 
 export function isActiveAvailabilityStatus(value: string | null | undefined) {

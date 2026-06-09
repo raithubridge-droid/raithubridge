@@ -348,6 +348,43 @@ export async function getOrCreateCart(input: { userId?: string }) {
   return createdCart
 }
 
+export async function ensureInventoryForApprovedProduct(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  productId: string
+) {
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select("quantity_available")
+    .eq("id", productId)
+    .maybeSingle()
+
+  if (productError) {
+    throw new Error(productError.message)
+  }
+
+  if (!product) {
+    return
+  }
+
+  const stockCount = Number(product.quantity_available)
+  const inStock = stockCount > 0
+
+  const { error } = await supabase.from("inventory").upsert(
+    {
+      availability_status: inStock ? "Active" : "Sold Out",
+      in_stock: inStock,
+      product_id: productId,
+      stock_count: stockCount,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "product_id" }
+  )
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
 export async function updateInventoryAvailability(input: {
   productId: string
   inStock: boolean

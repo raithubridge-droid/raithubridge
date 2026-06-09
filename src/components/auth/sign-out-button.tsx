@@ -13,9 +13,16 @@ const CLOSE_MOBILE_MENU_EVENT = "raithubridge-close-mobile-menu"
 type SignOutButtonProps = {
   buttonClassName?: string
   formClassName?: string
+  label?: string
+  signingOutLabel?: string
 }
 
-export function SignOutButton({ buttonClassName, formClassName }: SignOutButtonProps = {}) {
+export function SignOutButton({
+  buttonClassName,
+  formClassName,
+  label = "Sign Out",
+  signingOutLabel = "Signing out...",
+}: SignOutButtonProps = {}) {
   const router = useRouter()
   const [isSigningOut, setIsSigningOut] = React.useState(false)
   const [message, setMessage] = React.useState<string | null>(null)
@@ -59,7 +66,7 @@ export function SignOutButton({ buttonClassName, formClassName }: SignOutButtonP
         disabled={isSigningOut}
         onClick={() => void handleSignOut()}
       >
-        {isSigningOut ? "Signing out..." : "Sign Out"}
+        {isSigningOut ? signingOutLabel : label}
       </Button>
       {message ? (
         <p className="mt-2 text-sm text-destructive">{message}</p>

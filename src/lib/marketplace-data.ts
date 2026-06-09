@@ -52,9 +52,12 @@ export type PendingSubmission = {
   sellerState: string
   productName: string
   category: string
+  categoryId?: string | null
   quantityAvailable: string
+  quantityValue?: number
   unit: string
   price: string
+  priceValue?: number
   description: string
   status: SubmissionStatus
   adminComment: string

@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
-import { redirect } from "next/navigation"
 
 import { AdminInventoryClient } from "@/app/admin/inventory/admin-inventory-client"
-import { getCurrentProfile } from "@/lib/auth/roles"
+import { AdminAccessFallback } from "@/components/auth/admin-access-fallback"
+import { getAdminPageAccess } from "@/lib/auth/admin-guard"
 import { getInventory } from "@/lib/marketplace-repository"
 
 export const metadata: Metadata = {
@@ -10,15 +10,19 @@ export const metadata: Metadata = {
   description: "Admin-only inventory view for submitted products.",
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function AdminInventoryPage() {
-  const { user, profile } = await getCurrentProfile()
+  const access = await getAdminPageAccess()
 
-  if (!user) {
-    redirect("/sign-in")
-  }
-
-  if (profile?.role !== "admin") {
-    redirect("/unauthorized")
+  if (access.kind !== "ok") {
+    return (
+      <AdminAccessFallback
+        access={access}
+        nextPath="/admin/inventory"
+        title="Admin Inventory"
+      />
+    )
   }
 
   const items = await getInventory({ fallbackToSamples: false })

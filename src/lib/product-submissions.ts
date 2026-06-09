@@ -1,3 +1,4 @@
+import { EMPTY_ADMIN_COMMENT } from "@/lib/admin-comments"
 import type { PendingSubmission } from "@/lib/marketplace-data"
 import { normalizeReviewStatus } from "@/lib/domain"
 import { mapMediaRowToAsset } from "@/lib/product-media"
@@ -34,15 +35,18 @@ function mapProductToSubmission(
   mediaRows: MediaRow[]
 ): PendingSubmission {
   return {
-    adminComment: product.admin_comment ?? "No admin comments yet.",
+    adminComment: product.admin_comment?.trim() || EMPTY_ADMIN_COMMENT,
     category: categoryName,
+    categoryId: product.category_id,
     description: product.description,
     sellerDistrict: product.seller_district ?? "",
     id: product.id,
     sellerPhone: product.seller_phone ?? "",
     price: formatPrice(Number(product.price), product.unit),
+    priceValue: Number(product.price),
     productName: product.name,
     quantityAvailable: formatNumber(Number(product.quantity_available)),
+    quantityValue: Number(product.quantity_available),
     sellerName: product.seller_name,
     sellerState: product.seller_state ?? "",
     status: normalizeReviewStatus(product.review_status ?? product.status),

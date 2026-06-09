@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 
-import { AdminSubmissionsList } from "@/components/admin-submissions-list"
+import { AdminAccessFallback } from "@/components/auth/admin-access-fallback"
+import { AdminSubmissionsWorkspace } from "@/components/admin-submissions-workspace"
 import { Button } from "@/components/ui/button"
-import { getCurrentProfile } from "@/lib/auth/roles"
+import { getAdminPageAccess } from "@/lib/auth/admin-guard"
 import { getAdminSubmissions } from "@/lib/product-submissions"
 
 export const metadata: Metadata = {
@@ -15,25 +15,32 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 export default async function AdminPage() {
-  const { user, profile } = await getCurrentProfile()
+  const access = await getAdminPageAccess()
 
-  if (!user) {
-    redirect("/sign-in?next=/admin")
-  }
-
-  if (profile?.role !== "admin") {
-    redirect("/unauthorized")
+  if (access.kind !== "ok") {
+    return (
+      <AdminAccessFallback
+        access={access}
+        nextPath="/admin"
+        title="Review Products"
+      />
+    )
   }
 
   const submissions = await getAdminSubmissions()
 
   return (
-    <main className="px-4 py-4">
-      <div className="mx-auto w-full max-w-3xl space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-            Review Products
-          </h1>
+    <main className="px-4 py-4 sm:py-6">
+      <div className="mx-auto w-full max-w-6xl space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+              Review Products
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+              Review farmer submissions before they go live on the marketplace.
+            </p>
+          </div>
           <Button
             asChild
             variant="outline"
@@ -44,7 +51,7 @@ export default async function AdminPage() {
           </Button>
         </div>
 
-        <AdminSubmissionsList items={submissions} />
+        <AdminSubmissionsWorkspace items={submissions} />
       </div>
     </main>
   )

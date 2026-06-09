@@ -2,7 +2,11 @@
 
 import * as React from "react"
 
-import { getCategoryPlaceholder, getDisplayImageUrl } from "@/lib/product-media"
+import {
+  getCategoryPlaceholderImageUrl,
+  getDisplayImageUrl,
+  resolveProductImageSrc,
+} from "@/lib/product-media"
 import type { ProductMediaAsset } from "@/lib/marketplace-data"
 import { cn } from "@/lib/utils"
 
@@ -12,32 +16,48 @@ type ProductImageProps = {
   alt: string
   className?: string
   imageClassName?: string
+  imageUrl?: string | null
   includePendingForOwner?: boolean
   includeFarmerUploads?: boolean
   includeManageableImages?: boolean
 }
 
-function CategoryPlaceholderVisual({
-  category,
-  className,
-}: {
+type SafeProductPhotoProps = {
   category: string
+  alt: string
   className?: string
-}) {
-  const placeholder = getCategoryPlaceholder(category)
+  imageClassName?: string
+  src?: string | null
+}
+
+export function SafeProductPhoto({
+  category,
+  alt,
+  className = "h-40",
+  imageClassName,
+  src,
+}: SafeProductPhotoProps) {
+  const placeholderUrl = getCategoryPlaceholderImageUrl(category)
+  const initialSrc = resolveProductImageSrc(category, src)
+  const [currentSrc, setCurrentSrc] = React.useState(initialSrc)
+
+  React.useEffect(() => {
+    setCurrentSrc(resolveProductImageSrc(category, src))
+  }, [category, placeholderUrl, src])
 
   return (
-    <div
-      className={cn(
-        "flex h-full w-full flex-col items-center justify-center gap-2 px-3 text-center",
-        placeholder.className,
-        className
-      )}
-    >
-      <span className="text-4xl sm:text-5xl" aria-hidden>
-        {placeholder.emoji}
-      </span>
-      <span className="text-xs font-semibold sm:text-sm">{placeholder.label}</span>
+    <div className={cn("relative overflow-hidden bg-muted/80", className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={currentSrc}
+        alt={alt}
+        className={cn("h-full w-full object-cover", imageClassName)}
+        onError={() => {
+          if (currentSrc !== placeholderUrl) {
+            setCurrentSrc(placeholderUrl)
+          }
+        }}
+      />
     </div>
   )
 }
@@ -48,32 +68,26 @@ export function ProductImage({
   alt,
   className = "h-40",
   imageClassName,
+  imageUrl,
   includePendingForOwner,
   includeFarmerUploads,
   includeManageableImages,
 }: ProductImageProps) {
-  const imageUrl = getDisplayImageUrl(mediaAssets, category, {
-    includePendingForOwner,
-    includeFarmerUploads,
-    includeManageableImages,
-  })
-  const [imageError, setImageError] = React.useState(false)
-  const showPlaceholder = !imageUrl || imageError
+  const resolvedMediaUrl =
+    imageUrl ??
+    getDisplayImageUrl(mediaAssets, category, {
+      includePendingForOwner,
+      includeFarmerUploads,
+      includeManageableImages,
+    })
 
   return (
-    <div className={cn("relative overflow-hidden bg-muted/80", className)}>
-      {imageUrl && !showPlaceholder ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={imageUrl}
-          src={imageUrl}
-          alt={alt}
-          className={cn("h-full w-full object-cover", imageClassName)}
-          onError={() => setImageError(true)}
-        />
-      ) : (
-        <CategoryPlaceholderVisual category={category} />
-      )}
-    </div>
+    <SafeProductPhoto
+      category={category}
+      alt={alt}
+      className={className}
+      imageClassName={imageClassName}
+      src={resolvedMediaUrl}
+    />
   )
 }
